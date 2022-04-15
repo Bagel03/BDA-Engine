@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "downlevelIteration": true,
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "skipLibCheck": true,
+        "outDir": "./typings-temp"
+    },
+    "include": ["src/**/*.ts"]
+}

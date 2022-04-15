@@ -1,0 +1,27 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "files.exclude": {
+            "**/.git": true,
+            "**/.svn": true,
+            "**/.hg": true,
+            "**/CVS": true,
+            "**/.DS_Store": true,
+            "**/Thumbs.db": true,
+            "**/node_modules": true,
+            "**/package-lock.json": true,
+            "**/build/**/*": true
+        },
+        "workbench.colorCustomizations": {
+            "activityBar.background": "#20837b",
+            "titleBar.activeBackground": "#0caf94",
+            "titleBar.activeForeground": "#F7FBFA",
+            "activityBar.inactiveForeground": "#F7FBFA"
+        },
+        "search.useIgnoreFiles": false
+    }
+}
