@@ -1,8 +1,7 @@
 import { Logger, LoggerColors } from "../utils/logger";
 import { Class } from "../types/class";
 import { typeID, TypeID } from "../types/type_id";
-import { resetSymbol } from "../config/symbols"
-
+import { resetSymbol } from "../config/symbols";
 
 declare global {
     interface Function {
@@ -12,26 +11,37 @@ declare global {
 
 export class ObjectPool {
     private readonly pools: Map<TypeID, Array<any>> = new Map();
-    private readonly logger: Logger = new Logger("ObjectPool", LoggerColors.teal);
+    private readonly logger: Logger = new Logger(
+        "ObjectPool",
+        LoggerColors.teal
+    );
 
-    private reset<T extends Class>(obj: InstanceType<T>, ...prams: ConstructorParameters<T>): void {
-        if(obj.constructor[resetSymbol]) {
-            obj.constructor[resetSymbol].apply(obj, prams);
+    private reset<T extends Class>(
+        obj: InstanceType<T>,
+        ...prams: ConstructorParameters<T>
+    ): void {
+        if (obj[resetSymbol]) {
+            obj[resetSymbol].apply(obj, prams);
         } else {
             try {
                 obj.constructor.apply(obj, prams);
             } catch (e) {
-                this.logger.error(`Failed to reset ${obj.constructor.name}, please add a reset method or mark it as non-poolable`);
+                this.logger.error(
+                    `Failed to reset ${obj.constructor.name}, please add a reset method or mark it as non-poolable`
+                );
             }
         }
     }
 
-    public new<T extends Class>(type: T, ...prams: ConstructorParameters<T>): InstanceType<T> {
+    public new<T extends Class>(
+        type: T,
+        ...prams: ConstructorParameters<T>
+    ): InstanceType<T> {
         const pool = this.pools.get(typeID(type));
         if (pool) {
             const obj = pool.pop();
             if (obj) {
-                this.reset(obj, ...prams)
+                this.reset(obj, ...prams);
                 return obj;
             }
         }

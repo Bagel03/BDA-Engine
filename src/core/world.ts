@@ -19,7 +19,7 @@ export class World extends mixin(PluginManager, NamedClassMap("resource")) {
     public readonly systems: ClassMap = new ClassMap();
     private readonly entities: Map<string, Entity> = new Map();
     public readonly enabledSystems: (Class<System<any>> | string)[] = [];
-    private readonly pool: ObjectPool = new ObjectPool();
+    public readonly pool: ObjectPool = new ObjectPool();
 
     private readonly systemInfo: {
         added: Class<System<any>>[];
@@ -63,14 +63,17 @@ export class World extends mixin(PluginManager, NamedClassMap("resource")) {
         });
     }
 
-    remove(entity: Entity) {
-        assert(
-            this.entities.has(entity.id),
-            `Entity ${entity.id} does not exist`
-        );
+    remove(id: string) {
+        assert(this.entities.has(id), `Entity ${id} does not exist`);
+
+        const entity = this.entities.get(id)!;
 
         entity.componentClassMap.forEach((component, name) => {
-            this.entityRemoveComponent(entity, component.constructor);
+            this.entityRemoveComponent(
+                entity,
+                component.constructor as Class<any>
+            );
+            this.pool.free(component);
         });
 
         this.entities.delete(entity.id);
@@ -78,6 +81,8 @@ export class World extends mixin(PluginManager, NamedClassMap("resource")) {
         this.systemInfo.removed.forEach((sys) => {
             this.systems.get(sys).entityRemoved(entity);
         });
+
+        this.pool.free(entity);
     }
 
     //[package] private
@@ -133,6 +138,8 @@ export class World extends mixin(PluginManager, NamedClassMap("resource")) {
             }
         }
 
+        console.log(this.systemInfo);
+
         logger.log(`Added system ${name ? name : system.constructor.name}`);
     }
 
@@ -171,20 +178,4 @@ export class World extends mixin(PluginManager, NamedClassMap("resource")) {
             sys.update(...args);
         });
     }
-
-    // static overloads: string[] = [];
-
-    // static addMethod<N extends keyof WorldMethods, M extends World[N]>(
-    //     name: N,
-    //     method: (this: World, ...args: Parameters<M>) => ReturnType<M>
-    // ) {
-    //     assert(
-    //         !this.overloads.includes(name),
-    //         `Tried to add a world method twice`
-    //     );
-
-    //     (this.prototype[name] as M) = method as M;
-    //     this.overloads.push(name);
-    //     logger.log(`Added method ${name} to World`);
-    // }
 }

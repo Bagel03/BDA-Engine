@@ -2,6 +2,7 @@ import { NamedClassMap } from "../utils/classmap";
 import { generateID } from "../utils/id";
 import { resetSymbol } from "../config/symbols";
 import { World } from "./world";
+import { Class } from "../types/class";
 
 export class Entity extends NamedClassMap("component") {
     constructor(
@@ -9,6 +10,10 @@ export class Entity extends NamedClassMap("component") {
         public readonly id = generateID()
     ) {
         super();
+    }
+
+    add<T extends Class>(component: T, ...args: ConstructorParameters<T>) {
+        this.addComponent(this.world.pool.new(component, ...args));
     }
 
     [`addComponent`] = (component: any, name?: string) => {

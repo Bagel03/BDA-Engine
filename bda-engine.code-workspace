@@ -17,8 +17,8 @@
             "**/build/**/*": true
         },
         "workbench.colorCustomizations": {
-            "activityBar.background": "#20837b",
-            "titleBar.activeBackground": "#0caf94",
+            "activityBar.background": "#20837b6e",
+            "titleBar.activeBackground": "#0caf9475",
             "titleBar.activeForeground": "#F7FBFA",
             "activityBar.inactiveForeground": "#F7FBFA"
         },
