@@ -1,4 +1,4 @@
-import { defaultSymbol, defaultSystemType } from "../config/symbols";
+import { defaultSymbol } from "../config/symbols";
 import { Class } from "../types/class";
 import { Entity } from "./entity";
 import { World } from "./world";
@@ -19,36 +19,40 @@ enum QueryResult {
     None,
 }
 
-interface QueryModifier {
-    metadata: QueryMetadata;
-    test: (entity: Entity) => QueryResult;
+class QueryModifier {
+    constructor(
+        public metadata: QueryMetadata,
+        public test: (entity: Entity) => QueryResult
+    ) {}
 }
 
-type keyQ<Q extends Record<string, QueryModifier> | QueryModifier> =
-    Q extends QueryModifier ? Q : keyof Q;
+export abstract class System<
+    T extends (string | symbol)[] = [typeof defaultSymbol]
+> {
+    private readonly queriesToEntities: {
+        [id in T[number]]: Map<string, Entity>;
+    };
 
-export abstract class System<Q extends Record<string, any> | any> {
-    private readonly queriesToEntities: Q extends QueryModifier
-        ? {
-              [defaultSymbol]: Map<string, Entity>;
-          }
-        : {
-              [id in keyof Q]: Map<string, Entity>;
-          };
+    private readonly queries: Record<T[number], QueryModifier>;
 
-    private readonly addedQueries: (keyof Q)[] = [];
-    private readonly removedQueries: (keyof Q)[] = [];
-    private readonly componentsToQueries: Map<Class, (keyof Q)[]> = new Map();
-    private readonly queriesToClear: (keyof Q)[] = [];
+    private readonly addedQueries: T[number][] = [];
+    private readonly removedQueries: T[number][] = [];
+    private readonly componentsToQueries: Map<Class, T[number][]> = new Map();
 
-    protected get entities(): Q extends QueryModifier
+    private readonly queriesToClear: T[number][] = [];
+
+    protected get entities(): this extends System // See if there is not more than one query
         ? Map<string, Entity>
         : {
-              [id in keyof Q]: Map<string, Entity>;
+              [id in T[number]]: Map<string, Entity>;
           } {
-        return this.queriesToEntities[defaultSymbol]
-            ? this.queriesToEntities[defaultSymbol]
-            : this.queriesToEntities;
+        if ((this.queries as { [defaultSymbol]?: any })[defaultSymbol]) {
+            //@ts-ignore
+            return this.queriesToEntities[defaultSymbol];
+        } else {
+            //@ts-ignore
+            return this.queriesToEntities;
+        }
     }
 
     // For use by world only
@@ -126,14 +130,29 @@ export abstract class System<Q extends Record<string, any> | any> {
         };
     }
 
-    constructor(public readonly world: World, private readonly queries: Q) {
+    constructor(
+        public readonly world: World,
+        queries: T extends [typeof defaultSymbol]
+            ? QueryModifier
+            : Record<T[number], QueryModifier>
+    ) {
+        // This is type safe, ts will not allow this to be done
+        this.queries =
+            queries instanceof QueryModifier
+                ? //@ts-ignore
+                  { [defaultSymbol]: queries }
+                : queries;
+
         // Set it up
         this.queriesToEntities = {} as any;
+
+        // Go through each query and update our internal data structures
         for (const [key, query] of Object.entries(queries) as [
-            keyof Q,
+            T[number],
             QueryModifier
         ][]) {
             this.queriesToEntities[key] = new Map();
+            // If it is "Added" or "Removed" then we need to add it to the list of queries to clear after each frame
             if (!query.metadata.persistent) this.queriesToClear.push(key);
 
             for (const interest of query.metadata.interestedIn) {
@@ -158,7 +177,7 @@ export abstract class System<Q extends Record<string, any> | any> {
         }
     }
 
-    updateInternal() {
+    private updateInternal() {
         this.update();
         this.queriesToClear.forEach((query) => {
             this.queriesToEntities[query].clear();
@@ -170,48 +189,48 @@ export abstract class System<Q extends Record<string, any> | any> {
 
 // Different Query implementations
 export const With = (...components: Class[]) => {
-    return {
-        metadata: {
+    return new QueryModifier(
+        {
             interestedIn: components,
-            persistent: true,
+            persistent: false,
         },
-        test: (entity: Entity) => {
+        (entity: Entity) => {
             for (const component of components) {
                 if (!entity.has(component)) return QueryResult.Remove;
             }
             return QueryResult.Add;
-        },
-    };
+        }
+    );
 };
 
 export const Without = (...components: Class[]) => {
-    return {
-        metadata: {
+    return new QueryModifier(
+        {
             interestedIn: components,
-            persistent: true,
+            persistent: false,
         },
-        test: (entity: Entity) => {
+        (entity: Entity) => {
             for (const component of components) {
                 if (entity.has(component)) return QueryResult.Remove;
             }
             return QueryResult.Add;
-        },
-    };
+        }
+    );
 };
 
 export const WithAdded = (...components: Class[]) => {
-    return {
-        metadata: {
+    return new QueryModifier(
+        {
             interestedIn: components,
             persistent: false,
         },
-        test: (entity: Entity) => {
+        (entity: Entity) => {
             for (const component of components) {
                 if (!entity.has(component)) return QueryResult.Add;
             }
             return QueryResult.None;
-        },
-    };
+        }
+    );
 };
 
 // Query(Added(Foo), With(Bar), Without(Baz), Not(With(Qux)))
@@ -259,9 +278,3 @@ export const Query = (...modifiers: QueryModifier[]) => {
         },
     };
 };
-
-class MySystem extends System<> {
-    constructor(world: World) {
-        super(world, {});
-    }
-}

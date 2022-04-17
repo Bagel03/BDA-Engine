@@ -13,6 +13,13 @@ declare global {
     }
 }
 
+export const typeName =
+    (id: TypeID) =>
+    (target: Class): Class => {
+        target[type] = id;
+        return target;
+    };
+
 export const typeID = (object: object | Class<any>): TypeID => {
     if (typeof object === "function") {
         return classID(object as Class);

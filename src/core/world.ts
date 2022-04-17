@@ -4,18 +4,17 @@ import { Entity } from "./entity";
 import { System } from "./system";
 import { Logger, LoggerColors } from "../utils/logger";
 import { assert } from "../utils/assert";
-import { WithOnlyType } from "../types/with";
-import { mixin } from "../utils/mixin";
 import { PluginManager } from "../utils/plugin_manager";
 import { generateID } from "../utils/id";
 
 const logger = new Logger("World", LoggerColors.blue);
 
 // Entities, Systems, Resources, etc
-export class World extends PluginManager {
+export class World extends PluginManager<World> {
     public readonly systems: ClassMap = new ClassMap();
-    private readonly entities: Map<string, Entity> = new Map();
     public readonly enabledSystems: (Class<System<any>> | string)[] = [];
+
+    private readonly entities: Map<string, Entity> = new Map();
 
     private readonly systemInfo: {
         added: Class<System<any>>[];
@@ -53,6 +52,7 @@ export class World extends PluginManager {
         );
 
         this.systemInfo.added.forEach((sys) => {
+            //@ts-ignore This should be public but I dont want users using (need a "package" modifier)
             this.systems.get(sys).entityAdded(entity);
         });
     }
@@ -69,6 +69,7 @@ export class World extends PluginManager {
         this.entities.delete(entity.id);
 
         this.systemInfo.removed.forEach((sys) => {
+            //@ts-ignore This should be public but I dont want users using (need a "package" modifier)
             this.systems.get(sys).entityRemoved(entity);
         });
     }
@@ -78,6 +79,7 @@ export class World extends PluginManager {
         if (!systems) return;
 
         systems.forEach((sys) => {
+            //@ts-ignore This should be public but I dont want users using (need a "package" modifier)
             this.systems.get(sys).componentAdded(entity, component);
         });
     }
@@ -87,6 +89,7 @@ export class World extends PluginManager {
         if (!systems) return;
 
         systems.forEach((sys) => {
+            //@ts-ignore This should be public but I dont want users using (need a "package" modifier)
             this.systems.get(sys).componentRemoved(entity, component);
         });
     }
@@ -192,7 +195,8 @@ export class World extends PluginManager {
                 }" does not exist`
             );
 
-            sys.update();
+            //@ts-ignore This should be public but I dont want users using (need a "package" modifier)
+            sys.updateInternal();
         });
     }
 }

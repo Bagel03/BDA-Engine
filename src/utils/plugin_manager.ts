@@ -1,22 +1,38 @@
 import { World } from "../core/world";
 import { nameSymbol } from "../config/symbols";
 import { Logger, LoggerColors } from "./logger";
+import { Class } from "../types/class";
 
 type Plugin<T> = (world: T) => any;
 
-export class PluginManager {
-    private readonly plugins: Plugin<typeof this>[] = [];
+declare global {
+    interface Function {
+        [nameSymbol]?: string;
+    }
+
+    interface Array<T> {
+        [nameSymbol]?: string;
+    }
+}
+
+export const name = (name: string) => (target: Class) => {
+    target[nameSymbol] = name;
+    return target;
+};
+
+export class PluginManager<T extends any> {
+    private readonly plugins: Plugin<T>[] = [];
     private static readonly logger = new Logger(
         "PluginManager",
         LoggerColors.blue
     );
 
-    addPlugin(plugin: Plugin<typeof this>) {
+    addPlugin(plugin: Plugin<T>) {
         try {
             PluginManager.logger.group(
                 `Adding plugin ${plugin[nameSymbol] || plugin.name}`
             );
-            plugin(this);
+            plugin(this as any);
             PluginManager.logger.groupEnd();
             this.plugins.push(plugin);
         } catch (e) {
@@ -27,7 +43,7 @@ export class PluginManager {
         }
     }
 
-    addPlugins(plugins: Plugin<typeof this>[]) {
+    addPlugins(plugins: Plugin<T>[]) {
         PluginManager.logger.group(
             `Adding plugins ${plugins[nameSymbol] || ""}`.trim()
         );
@@ -35,7 +51,7 @@ export class PluginManager {
         PluginManager.logger.groupEnd();
     }
 
-    hasPlugin(plugin: Plugin<typeof this>) {
+    hasPlugin(plugin: Plugin<T>) {
         return this.plugins.includes(plugin);
     }
 }
