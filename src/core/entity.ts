@@ -19,8 +19,8 @@ export class Entity {
         return this.components.has(component);
     }
 
-    add(component: any): Entity {
-        this.components.set(component);
+    add(component: any, name?: string): Entity {
+        this.components.set(component, name);
         return this;
     }
 

@@ -163,8 +163,8 @@ export class World extends PluginManager<World> {
         logger.log(`Added resource ${name ? name : resource.constructor.name}`);
     }
 
-    getResource(resource: Class<any> | string) {
-        return this.resources.get(resource);
+    getResource<T>(resource: Class<T> | string) {
+        return this.resources.get(resource) as T;
     }
 
     removeResource(resource: Class<any> | string) {
@@ -183,8 +183,8 @@ export class World extends PluginManager<World> {
 
     //#endregion
 
-    update(systems: (Class<System<any>> | string)[] | "all") {
-        if (systems === "all") systems = this.enabledSystems;
+    update(...systems: (Class<System<any>> | string)[] | ["all"]) {
+        if (systems[0] === "all") systems = this.enabledSystems;
 
         systems.forEach((system) => {
             const sys = this.systems.get(system);
