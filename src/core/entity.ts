@@ -1,30 +1,44 @@
-import { NamedClassMap } from "../utils/classmap";
 import { generateID } from "../utils/id";
-import { resetSymbol } from "../config/symbols";
 import { World } from "./world";
 import { Class } from "../types/class";
+import { ClassMap } from "../utils/classmap";
 
-export class Entity extends NamedClassMap("component") {
+export class Entity {
+    private readonly components: ClassMap<any> = new ClassMap();
+
     constructor(
         public readonly world: World,
         public readonly id = generateID()
-    ) {
-        super();
+    ) {}
+
+    get<T>(component: Class<T> | string): T {
+        return this.components.get(component);
     }
 
-    add<T extends Class>(component: T, ...args: ConstructorParameters<T>) {
-        this.addComponent(this.world.pool.new(component, ...args));
+    has(component: Class<any> | string): boolean {
+        return this.components.has(component);
     }
 
-    [`addComponent`] = (component: any, name?: string) => {
-        this.componentClassMap.set(component, name);
-        this.world.entityAttachComponent(this, component.constructor);
-    };
+    add(component: any): Entity {
+        this.components.set(component);
+        return this;
+    }
 
-    [resetSymbol](world: World, id: string) {
-        //@ts-ignore
-        this.world = world;
-        //@ts-ignore
-        this.id = id;
+    remove(component: any): Entity {
+        this.components.delete(component);
+        return this;
+    }
+
+    clear(): Entity {
+        this.components.clear();
+        return this;
+    }
+
+    forEach(
+        callbackfn: (value: any, key: Class<any> | string) => void,
+        thisArg?: any
+    ): Entity {
+        this.components.forEach(callbackfn, thisArg);
+        return this;
     }
 }

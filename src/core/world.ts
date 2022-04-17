@@ -1,52 +1,46 @@
-import { ClassMap, NamedClassMap } from "../utils/classmap";
+import { ClassMap } from "../utils/classmap";
 import { Class } from "../types/class";
 import { Entity } from "./entity";
 import { System } from "./system";
 import { Logger, LoggerColors } from "../utils/logger";
 import { assert } from "../utils/assert";
 import { WithOnlyType } from "../types/with";
-import { ObjectPool } from "./object_pool";
 import { mixin } from "../utils/mixin";
 import { PluginManager } from "../utils/plugin_manager";
 import { generateID } from "../utils/id";
 
-type WorldMethods = WithOnlyType<World, (...args: any[]) => any>;
-
 const logger = new Logger("World", LoggerColors.blue);
 
 // Entities, Systems, Resources, etc
-export class World extends mixin(PluginManager, NamedClassMap("resource")) {
+export class World extends PluginManager {
     public readonly systems: ClassMap = new ClassMap();
     private readonly entities: Map<string, Entity> = new Map();
     public readonly enabledSystems: (Class<System<any>> | string)[] = [];
-    public readonly pool: ObjectPool = new ObjectPool();
 
     private readonly systemInfo: {
         added: Class<System<any>>[];
         removed: Class<System<any>>[];
-        componentsToSystems: Map<Class, Class<System<any>>[]>;
+        componentsToSystems: Map<Class | string, Class<System<any>>[]>;
     } = {
         added: [],
         removed: [],
         componentsToSystems: new Map(),
     };
 
+    private readonly resources: ClassMap = new ClassMap();
+
     constructor() {
         super();
-
-        // Dirty hack because mixin can't be used with super
-        this.resourceClassMap = new ClassMap();
-
         logger.log("World Created");
     }
 
     spawn(id: string = generateID()) {
-        const ent = this.pool.new(Entity, this, id);
+        const ent = new Entity(this, id);
         this.add(ent);
         return ent;
     }
 
-    add(entity: Entity) {
+    private add(entity: Entity) {
         assert(
             !this.entities.has(entity.id),
             `Entity ${entity.id} already exists`
@@ -54,8 +48,8 @@ export class World extends mixin(PluginManager, NamedClassMap("resource")) {
 
         this.entities.set(entity.id, entity);
 
-        entity.componentClassMap.forEach((component) =>
-            this.entityAttachComponent(entity, component.constructor)
+        entity.forEach((component, name) =>
+            this.entityAttachComponent(entity, name)
         );
 
         this.systemInfo.added.forEach((sys) => {
@@ -68,12 +62,8 @@ export class World extends mixin(PluginManager, NamedClassMap("resource")) {
 
         const entity = this.entities.get(id)!;
 
-        entity.componentClassMap.forEach((component, name) => {
-            this.entityRemoveComponent(
-                entity,
-                component.constructor as Class<any>
-            );
-            this.pool.free(component);
+        entity.forEach((component, name) => {
+            this.entityRemoveComponent(entity, name);
         });
 
         this.entities.delete(entity.id);
@@ -81,12 +71,9 @@ export class World extends mixin(PluginManager, NamedClassMap("resource")) {
         this.systemInfo.removed.forEach((sys) => {
             this.systems.get(sys).entityRemoved(entity);
         });
-
-        this.pool.free(entity);
     }
 
-    //[package] private
-    entityAttachComponent(entity: Entity, component: Class) {
+    private entityAttachComponent(entity: Entity, component: Class | string) {
         const systems = this.systemInfo.componentsToSystems.get(component);
         if (!systems) return;
 
@@ -95,8 +82,7 @@ export class World extends mixin(PluginManager, NamedClassMap("resource")) {
         });
     }
 
-    //[package] private
-    entityRemoveComponent(entity: Entity, component: Class) {
+    private entityRemoveComponent(entity: Entity, component: Class | string) {
         const systems = this.systemInfo.componentsToSystems.get(component);
         if (!systems) return;
 
@@ -108,6 +94,8 @@ export class World extends mixin(PluginManager, NamedClassMap("resource")) {
     get(id: string) {
         return this.entities.get(id);
     }
+
+    //#region System Management
 
     addSystem(system: System<any>, name?: string) {
         this.systems.set(system, name);
@@ -163,7 +151,36 @@ export class World extends mixin(PluginManager, NamedClassMap("resource")) {
         );
     }
 
-    update(systems: (Class<System<any>> | string)[] | "all", ...args: any[]) {
+    //#endregion
+
+    //#region Resource Management
+
+    addResource(resource: any, name?: string) {
+        this.resources.set(resource, name);
+        logger.log(`Added resource ${name ? name : resource.constructor.name}`);
+    }
+
+    getResource(resource: Class<any> | string) {
+        return this.resources.get(resource);
+    }
+
+    removeResource(resource: Class<any> | string) {
+        this.resources.delete(resource);
+        logger.log(
+            `Removed resource ${
+                typeof resource === "string" ? resource : resource.name
+            }`
+        );
+    }
+
+    clearResources() {
+        this.resources.clear();
+        logger.log("Cleared all resources");
+    }
+
+    //#endregion
+
+    update(systems: (Class<System<any>> | string)[] | "all") {
         if (systems === "all") systems = this.enabledSystems;
 
         systems.forEach((system) => {
@@ -175,7 +192,7 @@ export class World extends mixin(PluginManager, NamedClassMap("resource")) {
                 }" does not exist`
             );
 
-            sys.update(...args);
+            sys.update();
         });
     }
 }

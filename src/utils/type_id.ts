@@ -1,17 +1,17 @@
-import { Logger } from "../utils/logger";
-import { Class } from "./class";
+import { Logger } from "./logger";
+import { Class } from "../types/class";
 
 export const type = Symbol("type");
 const logger = new Logger("TypeId");
 let currentType = 0;
 
+export type TypeID = string;
+
 declare global {
     interface Function {
-        [type]?: number;
+        [type]?: TypeID;
     }
 }
-
-export type TypeID = number;
 
 export const typeID = (object: object | Class<any>): TypeID => {
     if (typeof object === "function") {
@@ -19,16 +19,16 @@ export const typeID = (object: object | Class<any>): TypeID => {
     }
 
     if (object.constructor[type] === undefined) {
-        object.constructor[type] = currentType++;
+        object.constructor[type] = (currentType++).toString();
         logger.info(`Created type id for ${object.constructor.name}`);
     }
 
     return object.constructor[type]!;
 };
 
-export const classID = (constructor: Class<any>): TypeID => {
+const classID = (constructor: Class<any>): TypeID => {
     if (constructor[type] === undefined) {
-        constructor[type] = currentType++;
+        constructor[type] = (currentType++).toString();
         logger.info(`Created type id for ${constructor.name}`);
     }
 
