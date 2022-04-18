@@ -1,11 +1,11 @@
+import { Vector } from "../../plugins/shared/math/vector";
 import { System, With } from "../../src/core/system";
 import { BounceDir, Collider } from "../components/collider";
-import { Velocity } from "../components/vel";
 
 export class Bouncer extends System<["ball", "static"]> {
     constructor() {
         super({
-            ball: With("ball"),
+            ball: With("Ball"),
             static: With(Collider),
         });
     }
@@ -13,14 +13,17 @@ export class Bouncer extends System<["ball", "static"]> {
     update() {
         this.entities.ball.forEach((ball) => {
             this.entities.static.forEach((staticEntity) => {
+                if (staticEntity === ball) return;
+
                 if (Collider.intersects(ball, staticEntity)) {
+                    console.log("collided");
                     if (
                         staticEntity.get(Collider).bounceDir ===
                         BounceDir.Horizontal
                     ) {
-                        ball.get(Velocity).x *= -1;
+                        ball.get<Vector<2>>("Velocity").x *= -1;
                     } else {
-                        ball.get(Velocity).y *= -1;
+                        ball.get<Vector<2>>("Velocity").y *= -1;
                     }
                 }
             });

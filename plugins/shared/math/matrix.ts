@@ -18,8 +18,8 @@ export class Matrix<W extends number, H extends number> {
 
     // QOL methods
     getPos(this: Matrix<3, 3>) {
-        if (this.get(1, 0) === 0 && this.get(2, 0) === 0) {
-            return new Vector(this.get(2, 1), this.get(2, 2));
+        if (this.get(1, 0) === 0 && this.get(0, 1) === 0) {
+            return new Vector(this.get(2, 0), this.get(2, 1));
         } else {
             return new Vector(0, 0).applyAffineMatrix(this);
         }

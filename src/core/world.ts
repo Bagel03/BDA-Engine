@@ -89,7 +89,6 @@ export class World extends PluginManager<World> {
         const systems =
             this.systemInfo.componentsToSystems.get(componentTypeID);
         this.systemInfo;
-        debugger;
         if (!systems) return;
 
         systems.forEach((sys) => {

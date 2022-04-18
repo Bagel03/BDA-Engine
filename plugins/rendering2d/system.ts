@@ -20,13 +20,18 @@ export class Renderer extends System {
     }
 
     update() {
-        this.context.save();
+        this.context.clearRect(
+            0,
+            0,
+            this.context.canvas.width,
+            this.context.canvas.height
+        );
         this.entities.forEach((entity) => {
             const renderable = entity.get(Renderable);
             const position = entity.get<Matrix<3, 3>>("Position");
             this.context.setTransform(position.toDom2dMatrix());
             renderable.render(this.context);
-            this.context.restore();
+            this.context.resetTransform();
         });
     }
 }
