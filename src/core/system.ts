@@ -9,7 +9,7 @@ enum EntityEvent {
 }
 
 interface QueryMetadata {
-    interestedIn: (Class | EntityEvent)[];
+    interestedIn: (Class | EntityEvent | string)[];
     persistent: boolean;
 }
 
@@ -19,7 +19,7 @@ enum QueryResult {
     None,
 }
 
-class QueryModifier {
+export class QueryModifier {
     constructor(
         public metadata: QueryMetadata,
         public test: (entity: Entity) => QueryResult
@@ -37,7 +37,8 @@ export abstract class System<
 
     private readonly addedQueries: T[number][] = [];
     private readonly removedQueries: T[number][] = [];
-    private readonly componentsToQueries: Map<Class, T[number][]> = new Map();
+    private readonly componentsToQueries: Map<Class | string, T[number][]> =
+        new Map();
 
     private readonly queriesToClear: T[number][] = [];
 
@@ -131,7 +132,6 @@ export abstract class System<
     }
 
     constructor(
-        public readonly world: World,
         queries: T extends [typeof defaultSymbol]
             ? QueryModifier
             : Record<T[number], QueryModifier>
@@ -147,10 +147,8 @@ export abstract class System<
         this.queriesToEntities = {} as any;
 
         // Go through each query and update our internal data structures
-        for (const [key, query] of Object.entries(queries) as [
-            T[number],
-            QueryModifier
-        ][]) {
+        for (const key of Reflect.ownKeys(this.queries) as T[number][]) {
+            const query = this.queries[key];
             this.queriesToEntities[key] = new Map();
             // If it is "Added" or "Removed" then we need to add it to the list of queries to clear after each frame
             if (!query.metadata.persistent) this.queriesToClear.push(key);
@@ -188,11 +186,11 @@ export abstract class System<
 }
 
 // Different Query implementations
-export const With = (...components: Class[]) => {
+export const With = (...components: (Class | string)[]) => {
     return new QueryModifier(
         {
             interestedIn: components,
-            persistent: false,
+            persistent: true,
         },
         (entity: Entity) => {
             for (const component of components) {

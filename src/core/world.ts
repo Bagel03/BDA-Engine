@@ -100,7 +100,7 @@ export class World extends PluginManager<World> {
 
     //#region System Management
 
-    addSystem(system: System<any>, name?: string) {
+    addSystem(system: System<(string | symbol)[]> | System, name?: string) {
         this.systems.set(system, name);
         this.enabledSystems.push(
             name ? name : (system.constructor as Class<System<any>>)
@@ -128,8 +128,6 @@ export class World extends PluginManager<World> {
                 }
             }
         }
-
-        console.log(this.systemInfo);
 
         logger.log(`Added system ${name ? name : system.constructor.name}`);
     }
