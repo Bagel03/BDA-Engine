@@ -6,6 +6,7 @@ import { Logger, LoggerColors } from "../utils/logger";
 import { assert } from "../utils/assert";
 import { PluginManager } from "../utils/plugin_manager";
 import { generateID } from "../utils/id";
+import { typeID, TypeID } from "../utils/type_id";
 
 const logger = new Logger("World", LoggerColors.blue);
 
@@ -19,7 +20,7 @@ export class World extends PluginManager<World> {
     private readonly systemInfo: {
         added: Class<System<any>>[];
         removed: Class<System<any>>[];
-        componentsToSystems: Map<Class | string, Class<System<any>>[]>;
+        componentsToSystems: Map<TypeID, Class<System<any>>[]>;
     } = {
         added: [],
         removed: [],
@@ -39,7 +40,13 @@ export class World extends PluginManager<World> {
         return ent;
     }
 
-    private add(entity: Entity) {
+    spawnBundle(bundle: (ent: Entity) => void, id?: string) {
+        const ent = this.spawn(id);
+        bundle(ent);
+        return ent;
+    }
+
+    add(entity: Entity) {
         assert(
             !this.entities.has(entity.id),
             `Entity ${entity.id} already exists`
@@ -48,12 +55,14 @@ export class World extends PluginManager<World> {
         this.entities.set(entity.id, entity);
 
         entity.forEach((component, name) =>
-            this.entityAttachComponent(entity, name)
+            this._entityAttachComponent(
+                entity,
+                typeof name === "string" ? name : typeID(name)
+            )
         );
 
         this.systemInfo.added.forEach((sys) => {
-            //@ts-ignore This should be public but I dont want users using (need a "package" modifier)
-            this.systems.get(sys).entityAdded(entity);
+            this.systems.get(sys)._entityAdded(entity);
         });
     }
 
@@ -63,34 +72,38 @@ export class World extends PluginManager<World> {
         const entity = this.entities.get(id)!;
 
         entity.forEach((component, name) => {
-            this.entityRemoveComponent(entity, name);
+            this._entityRemoveComponent(
+                entity,
+                typeof name === "string" ? name : typeID(name)
+            );
         });
 
         this.entities.delete(entity.id);
 
         this.systemInfo.removed.forEach((sys) => {
-            //@ts-ignore This should be public but I dont want users using (need a "package" modifier)
-            this.systems.get(sys).entityRemoved(entity);
+            this.systems.get(sys)._entityRemoved(entity);
         });
     }
 
-    private entityAttachComponent(entity: Entity, component: Class | string) {
-        const systems = this.systemInfo.componentsToSystems.get(component);
+    _entityAttachComponent(entity: Entity, componentTypeID: TypeID) {
+        const systems =
+            this.systemInfo.componentsToSystems.get(componentTypeID);
+        this.systemInfo;
+        debugger;
         if (!systems) return;
 
         systems.forEach((sys) => {
-            //@ts-ignore This should be public but I dont want users using (need a "package" modifier)
-            this.systems.get(sys).componentAdded(entity, component);
+            this.systems.get(sys)._componentAdded(entity, componentTypeID);
         });
     }
 
-    private entityRemoveComponent(entity: Entity, component: Class | string) {
-        const systems = this.systemInfo.componentsToSystems.get(component);
+    _entityRemoveComponent(entity: Entity, componentTypeID: TypeID) {
+        const systems =
+            this.systemInfo.componentsToSystems.get(componentTypeID);
         if (!systems) return;
 
         systems.forEach((sys) => {
-            //@ts-ignore This should be public but I dont want users using (need a "package" modifier)
-            this.systems.get(sys).componentRemoved(entity, component);
+            this.systems.get(sys)._componentRemoved(entity, componentTypeID);
         });
     }
 
@@ -106,7 +119,7 @@ export class World extends PluginManager<World> {
             name ? name : (system.constructor as Class<System<any>>)
         );
 
-        const { added, removed, components } = system.getQueryStats();
+        const { added, removed, components } = system._getQueryStats();
         if (added)
             this.systemInfo.added.push(
                 system.constructor as Class<System<any>>
@@ -193,8 +206,7 @@ export class World extends PluginManager<World> {
                 }" does not exist`
             );
 
-            //@ts-ignore This should be public but I dont want users using (need a "package" modifier)
-            sys.updateInternal();
+            sys._updateInternal();
         });
     }
 }

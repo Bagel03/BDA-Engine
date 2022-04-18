@@ -34,7 +34,11 @@ const banner = `\tBDA Engine v${version} ©Bagel03 2022
 
 const path = join(__dirname, "..", "typings", "types.d.ts");
 const file = readFileSync(path);
-const str = "/*\n" + banner + "\n*/\n" + file;
+let str = "/*\n" + banner + "\n*/\n" + file;
+
+// Mark everything starting with _ as private
+str = str.replaceAll(`_`, `private _`);
+
 writeFileSync(path, str);
 
 console.log(greenBright`[Typings] Finished processing typings`);

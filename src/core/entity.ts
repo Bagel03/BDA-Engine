@@ -2,6 +2,7 @@ import { generateID } from "../utils/id";
 import { World } from "./world";
 import { Class } from "../types/class";
 import { ClassMap } from "../utils/classmap";
+import { typeID } from "../utils/type_id";
 
 export class Entity {
     private readonly components: ClassMap<any> = new ClassMap();
@@ -21,18 +22,21 @@ export class Entity {
 
     add(component: any, name?: string): Entity {
         this.components.set(component, name);
-        //@ts-ignore This should be public but I dont want users using (need a "package" modifier)
-        this.world.entityAttachComponent(
+
+        this.world._entityAttachComponent(
             this,
-            name ? name : component.constructor
+            name ? name : typeID(component.constructor)
         );
         return this;
     }
 
-    remove(component: any): Entity {
+    remove(component: string | any): Entity {
         this.components.delete(component);
-        //@ts-ignore This should be public but I dont want users using (need a "package" modifier)
-        this.world.entityRemoveComponent(this, component);
+
+        this.world._entityRemoveComponent(
+            this,
+            typeof component === "string" ? component : typeID(component)
+        );
         return this;
     }
 

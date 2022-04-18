@@ -6,13 +6,10 @@ console.log(blueBright`[Exports] Starting to build exports...`);
 
 const enginePath = resolve(__dirname, "..", "src");
 
-const subDirs = readdirSync(enginePath).filter(
-    (str) => str !== "exports.ts" && str !== "types"
-);
+const subDirs = readdirSync(enginePath).filter((str) => str !== "exports.ts");
 
 let files = [];
 for (const subDir of subDirs) {
-    if (subDir === "types") continue;
     const subFiles = readdirSync(resolve(enginePath, subDir)).map((str) =>
         join("./", subDir, str)
     );

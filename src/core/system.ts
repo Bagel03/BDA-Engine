@@ -1,5 +1,6 @@
 import { defaultSymbol } from "../config/symbols";
 import { Class } from "../types/class";
+import { typeID, TypeID } from "../utils/type_id";
 import { Entity } from "./entity";
 import { World } from "./world";
 
@@ -9,7 +10,7 @@ enum EntityEvent {
 }
 
 interface QueryMetadata {
-    interestedIn: (Class | EntityEvent | string)[];
+    interestedIn: (EntityEvent | TypeID)[];
     persistent: boolean;
 }
 
@@ -19,7 +20,7 @@ enum QueryResult {
     None,
 }
 
-export class QueryModifier {
+class QueryModifier {
     constructor(
         public metadata: QueryMetadata,
         public test: (entity: Entity) => QueryResult
@@ -37,8 +38,7 @@ export abstract class System<
 
     private readonly addedQueries: T[number][] = [];
     private readonly removedQueries: T[number][] = [];
-    private readonly componentsToQueries: Map<Class | string, T[number][]> =
-        new Map();
+    private readonly componentsToQueries: Map<TypeID, T[number][]> = new Map();
 
     private readonly queriesToClear: T[number][] = [];
 
@@ -57,7 +57,7 @@ export abstract class System<
     }
 
     // For use by world only
-    private entityAdded(entity: Entity) {
+    _entityAdded(entity: Entity) {
         this.addedQueries.forEach((query) => {
             const result = this.queries[query].test(entity);
             if (result === QueryResult.None) return;
@@ -72,7 +72,7 @@ export abstract class System<
         });
     }
 
-    private entityRemoved(entity: Entity) {
+    _entityRemoved(entity: Entity) {
         this.removedQueries.forEach((query) => {
             const result = this.queries[query].test(entity);
             if (result === QueryResult.None) return;
@@ -87,8 +87,8 @@ export abstract class System<
         });
     }
 
-    private componentAdded(entity: Entity, component: Class) {
-        const queries = this.componentsToQueries.get(component);
+    _componentAdded(entity: Entity, componentTypeID: TypeID) {
+        const queries = this.componentsToQueries.get(componentTypeID);
         if (queries) {
             for (const query of queries) {
                 const result = this.queries[query].test(entity);
@@ -105,8 +105,8 @@ export abstract class System<
         }
     }
 
-    private componentRemoved(entity: Entity, component: Class) {
-        const queries = this.componentsToQueries.get(component);
+    _componentRemoved(entity: Entity, componentTypeID: TypeID) {
+        const queries = this.componentsToQueries.get(componentTypeID);
         if (queries) {
             for (const query of queries) {
                 const result = this.queries[query].test(entity);
@@ -123,7 +123,7 @@ export abstract class System<
         }
     }
 
-    getQueryStats() {
+    _getQueryStats() {
         return {
             added: this.addedQueries.length > 0,
             removed: this.removedQueries.length > 0,
@@ -175,7 +175,7 @@ export abstract class System<
         }
     }
 
-    private updateInternal() {
+    _updateInternal() {
         this.update();
         this.queriesToClear.forEach((query) => {
             this.queriesToEntities[query].clear();
@@ -189,7 +189,9 @@ export abstract class System<
 export const With = (...components: (Class | string)[]) => {
     return new QueryModifier(
         {
-            interestedIn: components,
+            interestedIn: components.map((component) =>
+                typeof component === "string" ? component : typeID(component)
+            ),
             persistent: true,
         },
         (entity: Entity) => {
@@ -204,7 +206,9 @@ export const With = (...components: (Class | string)[]) => {
 export const Without = (...components: Class[]) => {
     return new QueryModifier(
         {
-            interestedIn: components,
+            interestedIn: components.map((component) =>
+                typeof component === "string" ? component : typeID(component)
+            ),
             persistent: false,
         },
         (entity: Entity) => {
@@ -219,7 +223,9 @@ export const Without = (...components: Class[]) => {
 export const WithAdded = (...components: Class[]) => {
     return new QueryModifier(
         {
-            interestedIn: components,
+            interestedIn: components.map((component) =>
+                typeof component === "string" ? component : typeID(component)
+            ),
             persistent: false,
         },
         (entity: Entity) => {
