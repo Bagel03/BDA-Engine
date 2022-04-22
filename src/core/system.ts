@@ -1,5 +1,7 @@
 import { defaultSymbol } from "../config/symbols";
 import { Class } from "../types/class";
+import { assert } from "../utils/assert";
+import { key } from "../utils/classmap";
 import { typeID, TypeID } from "../utils/type_id";
 import { Entity } from "./entity";
 import { World } from "./world";
@@ -27,9 +29,7 @@ class QueryModifier {
     ) {}
 }
 
-export abstract class System<
-    T extends (string | symbol)[] = [typeof defaultSymbol]
-> {
+export abstract class System<T extends key[] = [typeof defaultSymbol]> {
     private readonly queriesToEntities: {
         [id in T[number]]: Map<string, Entity>;
     };
@@ -38,11 +38,13 @@ export abstract class System<
 
     private readonly addedQueries: T[number][] = [];
     private readonly removedQueries: T[number][] = [];
-    private readonly componentsToQueries: Map<TypeID, T[number][]> = new Map();
+    private readonly componentsToQueries: Map<key, T[number][]> = new Map();
 
     private readonly queriesToClear: T[number][] = [];
 
-    protected get entities(): this extends System // See if there is not more than one query
+    protected readonly world?: World;
+
+    protected get entities(): T extends [typeof defaultSymbol] // See if there is not more than one query
         ? Map<string, Entity>
         : {
               [id in T[number]]: Map<string, Entity>;
@@ -87,7 +89,7 @@ export abstract class System<
         });
     }
 
-    _componentAdded(entity: Entity, componentTypeID: TypeID) {
+    _componentAdded(entity: Entity, componentTypeID: key) {
         const queries = this.componentsToQueries.get(componentTypeID);
         if (queries) {
             for (const query of queries) {
@@ -105,7 +107,7 @@ export abstract class System<
         }
     }
 
-    _componentRemoved(entity: Entity, componentTypeID: TypeID) {
+    _componentRemoved(entity: Entity, componentTypeID: key) {
         const queries = this.componentsToQueries.get(componentTypeID);
         if (queries) {
             for (const query of queries) {
@@ -176,13 +178,16 @@ export abstract class System<
     }
 
     _updateInternal() {
+        assert(this.world, "System must be added to a world to update");
         this.update();
         this.queriesToClear.forEach((query) => {
             this.queriesToEntities[query].clear();
         });
     }
 
-    update(...args: any[]) {}
+    protected update() {}
+    onEnabled() {}
+    protected onDisabled(this: System<T> & { world: World }) {}
 }
 
 // Different Query implementations

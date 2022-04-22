@@ -1,4 +1,4 @@
-import { ClassMap } from "../utils/classmap";
+import { ClassMap, isKey, key } from "../utils/classmap";
 import { Class } from "../types/class";
 import { Entity } from "./entity";
 import { System } from "./system";
@@ -20,7 +20,7 @@ export class World extends PluginManager<World> {
     private readonly systemInfo: {
         added: Class<System<any>>[];
         removed: Class<System<any>>[];
-        componentsToSystems: Map<TypeID, Class<System<any>>[]>;
+        componentsToSystems: Map<key, Class<System<any>>[]>;
     } = {
         added: [],
         removed: [],
@@ -74,7 +74,7 @@ export class World extends PluginManager<World> {
         entity.forEach((component, name) => {
             this._entityRemoveComponent(
                 entity,
-                typeof name === "string" ? name : typeID(name)
+                isKey(name) ? name : typeID(name)
             );
         });
 
@@ -85,7 +85,7 @@ export class World extends PluginManager<World> {
         });
     }
 
-    _entityAttachComponent(entity: Entity, componentTypeID: TypeID) {
+    _entityAttachComponent(entity: Entity, componentTypeID: key) {
         const systems =
             this.systemInfo.componentsToSystems.get(componentTypeID);
         this.systemInfo;
@@ -96,7 +96,7 @@ export class World extends PluginManager<World> {
         });
     }
 
-    _entityRemoveComponent(entity: Entity, componentTypeID: TypeID) {
+    _entityRemoveComponent(entity: Entity, componentTypeID: key) {
         const systems =
             this.systemInfo.componentsToSystems.get(componentTypeID);
         if (!systems) return;
@@ -113,6 +113,9 @@ export class World extends PluginManager<World> {
     //#region System Management
 
     addSystem(system: System<(string | symbol)[]> | System, name?: string) {
+        //@ts-ignore
+        system.world = this;
+
         this.systems.set(system, name);
         this.enabledSystems.push(
             name ? name : (system.constructor as Class<System<any>>)
@@ -149,7 +152,7 @@ export class World extends PluginManager<World> {
 
         logger.log(
             `Enabled system ${
-                typeof system === "string" ? system : system.constructor.name
+                typeof system === "string" ? system : system.name
             }`
         );
     }

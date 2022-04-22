@@ -1,18 +1,16 @@
 import { Entity } from "../../../src/core/entity";
-import { Class } from "../../../src/types/class";
-import { type } from "../../../src/utils/type_id";
 import { Matrix } from "../../shared/math/matrix";
 import { Vector } from "../../shared/math/vector";
-import { Renderable } from "../renderable";
+import { Renderable } from "./renderable";
 
 type shapeType = "rect" | "arc" | "fillText";
 
 type shapeOptions = {
-    fillStyle?: string;
-    strokeStyle?: string;
-    lineWidth?: number;
-    fill?: boolean;
-    stroke?: boolean;
+    fillStyle: string;
+    strokeStyle: string;
+    lineWidth: number;
+    fill: boolean;
+    stroke: boolean;
 };
 
 export class Shape<T extends shapeType> extends Renderable {
@@ -20,12 +18,16 @@ export class Shape<T extends shapeType> extends Renderable {
     //     return "renderable";
     // }
 
+    public options: shapeOptions;
+
     constructor(
         public readonly type: T,
         public args: Parameters<CanvasRenderingContext2D[T]>,
-        public options: shapeOptions = {}
+        options: Partial<shapeOptions> = {}
     ) {
         super();
+
+        this.options = options as shapeOptions;
 
         this.options.fillStyle ??= "black";
         this.options.strokeStyle ??= "black";
@@ -39,7 +41,7 @@ export class Shape<T extends shapeType> extends Renderable {
         context.fillStyle = this.options.fillStyle;
         context.strokeStyle = this.options.strokeStyle;
         context.lineWidth = this.options.lineWidth;
-        context[this.type].apply(context, this.args);
+        context[this.type](...this.args);
         if (this.options.fill) {
             context.fill();
         }

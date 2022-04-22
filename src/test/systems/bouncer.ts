@@ -1,5 +1,5 @@
-import { Vector } from "../../plugins/shared/math/vector";
-import { System, With } from "../../src/core/system";
+import { Vector } from "../../../plugins/shared/math/vector";
+import { System, With } from "../../core/system";
 import { BounceDir, Collider } from "../components/collider";
 
 export class Bouncer extends System<["ball", "static"]> {
@@ -16,7 +16,6 @@ export class Bouncer extends System<["ball", "static"]> {
                 if (staticEntity === ball) return;
 
                 if (Collider.intersects(ball, staticEntity)) {
-                    console.log("collided");
                     if (
                         staticEntity.get(Collider).bounceDir ===
                         BounceDir.Horizontal

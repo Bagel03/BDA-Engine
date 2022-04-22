@@ -1,6 +1,6 @@
-import { Matrix } from "../../plugins/shared/math/matrix";
-import { Vector } from "../../plugins/shared/math/vector";
-import { Entity } from "../../src/core/entity";
+import { Matrix } from "../../../plugins/shared/math/matrix";
+import { Vector } from "../../../plugins/shared/math/vector";
+import { Entity } from "../../core/entity";
 
 export enum BounceDir {
     Horizontal,
