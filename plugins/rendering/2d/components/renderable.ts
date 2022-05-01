@@ -1,4 +1,4 @@
-import { type } from "../../../src/utils/type_id";
+import { type } from "../../../../src/utils/type_id";
 
 export class Renderable {
     static get [type]() {

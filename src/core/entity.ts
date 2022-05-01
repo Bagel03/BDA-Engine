@@ -79,6 +79,7 @@ export class Entity {
         "remove",
         "tag",
     ];
+
     static override<
         M extends keyof Entity,
         O extends Extract<Entity[M], (...args: any) => any>

@@ -4,9 +4,11 @@ export type ArrayLengthMutationKeys = "";
 // | "pop"
 // | "shift"
 // | "unshift";
+
 export type FixedLengthArray<
     T,
     L extends number,
+    A extends ArrayLike<T> = T[],
     TObj = [T, ...Array<T>]
 > = Pick<TObj, Exclude<keyof TObj, ArrayLengthMutationKeys>> & {
     readonly length: L;
@@ -17,5 +19,6 @@ export type FixedLengthArray<
 export type FixedLength2dArray<
     W extends number,
     H extends number,
-    T
-> = FixedLengthArray<FixedLengthArray<T, W>, H>;
+    T,
+    A extends ArrayLike<T>
+> = FixedLengthArray<FixedLengthArray<T, W, A>, H>;

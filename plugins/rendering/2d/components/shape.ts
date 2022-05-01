@@ -1,6 +1,6 @@
-import { Entity } from "../../../src/core/entity";
-import { Matrix } from "../../shared/math/matrix";
-import { Vector } from "../../shared/math/vector";
+import { Entity } from "../../../../src/core/entity";
+import { Matrix } from "../../../shared/math/matrix";
+import { Vector } from "../../../shared/math/vector";
 import { Renderable } from "./renderable";
 
 type shapeType = "rect" | "arc" | "fillText";

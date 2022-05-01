@@ -1,4 +1,4 @@
-import { ShapeBundle } from "../../plugins/rendering2d/components/shape";
+import { ShapeBundle } from "../../plugins/rendering/2d/components/shape";
 import { Renderer } from "../../plugins/rendering2d/system";
 import { Vector } from "../../plugins/shared/math/vector";
 import { World } from "../core/world";

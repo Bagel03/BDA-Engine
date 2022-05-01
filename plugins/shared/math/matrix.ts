@@ -5,156 +5,81 @@ import {
 import { Add, Subtract } from "../types/type_arithmetic";
 import { Vector } from "./vector";
 
-export class Matrix<W extends number, H extends number> {
-    private internalArray: number[][];
-    public width: W;
-    public height: H;
+export class Matrix<Rows extends number, Cols extends number> {
+    private readonly values: Float64Array;
 
-    constructor(arr: FixedLength2dArray<W, H, number>) {
-        this.width = arr[0].length;
-        this.height = arr.length;
-        this.internalArray = arr as number[][];
+    constructor(public readonly rows: Rows, public readonly cols: Cols) {
+        this.values = new Float64Array(rows * cols).fill(0);
     }
 
-    // QOL methods
-    getPos(this: Matrix<3, 3>) {
-        if (this.get(1, 0) === 0 && this.get(0, 1) === 0) {
-            return new Vector(this.get(2, 0), this.get(2, 1));
-        } else {
-            return new Vector(0, 0).applyAffineMatrix(this);
+    get(row: number, col: number): number {
+        return this.values[row * this.cols + col];
+    }
+
+    set(row: number, col: number, val: number): void {
+        this.values[row * this.cols + col] = val;
+    }
+
+    setRow(row: number, values: number[]): void {
+        for (let i = 0; i < this.cols; i++) {
+            this.values[row * this.cols + i] = values[i];
         }
     }
 
-    setPos(this: Matrix<3, 3>, pos: Vector<2>) {
-        this.set(2, 0, pos.get(0));
-        this.set(2, 1, pos.get(1));
-        return this;
+    setCol(col: number, values: number[]): void {
+        for (let i = 0; i < this.rows; i++) {
+            this.values[i * this.cols + col] = values[i];
+        }
     }
 
-    asArray() {
-        return this.internalArray as FixedLength2dArray<W, H, number>;
+    clone(): Matrix<Rows, Cols> {
+        const result = new Matrix<Rows, Cols>(this.rows, this.cols);
+        for (let i = 0; i < this.rows * this.cols; i++) {
+            result.values[i] = this.values[i];
+        }
+        return result;
     }
 
-    toDom2dMatrix(this: Matrix<3, 3>): DOMMatrix {
-        return new DOMMatrix([
-            this.get(0, 0),
-            this.get(1, 0),
-            this.get(0, 1),
-            this.get(1, 1),
-            this.get(2, 0),
-            this.get(2, 1),
-        ]);
+    add(other: Matrix<Rows, Cols>): Matrix<Rows, Cols> {
+        const result = new Matrix<Rows, Cols>(this.rows, this.cols);
+        for (let i = 0; i < this.rows * this.cols; i++) {
+            result.values[i] = this.values[i] + other.values[i];
+        }
+        return result;
     }
 
-    mult(matrix: Matrix<W, H>) {
-        for (let i = 0; i < this.height; i++) {
-            for (let j = 0; j < matrix.width; j++) {
+    // Matrix multiplication
+    mult<OtherCols extends number>(other: Matrix<Cols, OtherCols>): Matrix<Rows, OtherCols> {
+        if (this.cols !== other.rows) {
+            throw new Error("Matrix dimensions do not match");
+        }
+
+        const result = new Matrix(this.rows, other.cols);
+        for (let i = 0; i < this.rows; i++) {
+            for (let j = 0; j < other.cols; j++) {
                 let sum = 0;
-                for (let k = 0; k < this.width; k++) {
-                    sum += this.get(k, i) * matrix.get(j, k);
+                for (let k = 0; k < this.cols; k++) {
+                    sum += this.values[i * this.cols + k] * other.values[k * other.cols + j];
                 }
-                this.set(j, i, sum);
+                result.values[i * other.cols + j] = sum;
             }
         }
+        return result;
     }
 
-    clone() {
-        return new Matrix(
-            this.internalArray.map((row) => row.slice()) as FixedLength2dArray<
-                W,
-                H,
-                number
-            >
-        );
-    }
-
-    get(x: number, y: number) {
-        return this.internalArray[y][x];
-    }
-
-    set(x: number, y: number, value: number) {
-        this.internalArray[y][x] = value;
-    }
-
-    add(x: number, y: number, amount: number) {
-        this.internalArray[y][x] += amount;
-    }
-
-    setFromMatrix(matrix: Matrix<W, H>) {
-        this.internalArray = matrix.internalArray.map((row) => row.slice());
-    }
-
-    translate(vector: Vector<Subtract<H, 1>>) {
-        for (let i = 0; i < vector.size; i++) {
-            this.add(this.width - 1, i, vector.get(i));
+    // Matrix multiplication with a vector
+    multVector(vector: Vector<Cols>): Vector<Rows> {
+        if (this.cols !== vector.length) {
+            throw new Error("Matrix dimensions do not match");
         }
-        return this;
+        
     }
 
-    rotate(this: Matrix<3, 3>, angle: number) {
-        this.mult(Matrix.rotationMatrix(angle, 3));
-        return this;
-    }
-
-    static identity<M extends number>(size: M) {
-        const arr = [] as unknown as FixedLength2dArray<M, M, number>;
-
+    static identity(size: number): Matrix<number, number> {
+        const matrix = new Matrix(size, size);
         for (let i = 0; i < size; i++) {
-            arr[i] = [] as unknown as FixedLengthArray<number, M>;
-            for (let j = 0; j < size; j++) {
-                arr[i][j] = i === j ? 1 : 0;
-            }
+            matrix.values[i * size + i] = 1;
         }
-
-        return new Matrix(arr);
-    }
-
-    static mult<M extends number, N extends number, P extends number>(
-        first: Matrix<N, M>,
-        second: Matrix<P, N>
-    ) {
-        const newArr = [] as unknown as FixedLength2dArray<P, M, number>;
-
-        for (let i = 0; i < first.height; i++) {
-            newArr[i] = [] as unknown as FixedLengthArray<number, P>;
-            for (let j = 0; j < second.width; j++) {
-                let sum = 0;
-                for (let k = 0; k < first.width; k++) {
-                    sum += first.get(k, i) * second.get(j, k);
-                }
-                newArr[i][j] = sum;
-            }
-        }
-
-        return new Matrix(newArr);
-    }
-
-    static translationMatrix<T extends number, M extends Add<T, 1>>(
-        translation: Vector<T>
-    ) {
-        const matrix = Matrix.identity<M>((translation.size + 1) as M);
-
-        for (let i = 0; i < translation.size; i++) {
-            matrix.set(translation.size + 1, i, translation.get(i));
-        }
-
-        return matrix;
-    }
-
-    static rotationMatrix<T extends number = 3>(angle: number, size: T) {
-        const matrix = Matrix.identity<T>(size);
-
-        matrix.set(0, 0, Math.cos(angle));
-        matrix.set(0, 1, -Math.sin(angle));
-        matrix.set(1, 0, Math.sin(angle));
-        matrix.set(1, 1, Math.cos(angle));
-
         return matrix;
     }
 }
-
-new Matrix([
-    [1, 2, 3],
-    [4, 5, 6],
-    [7, 8, 9],
-]);

@@ -11,11 +11,12 @@ declare module "../../../src/core/entity" {
     }
 
     export interface Entity {
-        addRelation(name: key, target: Entity);
+        addRelation(name: key, target: Entity): void;
         getRelation(name: key): Map<string, Entity>;
         getRelation(name: key, single: true): Entity;
         removeRelation(name: key, targetID: string): void;
         removeRelation(name: key): void;
+        hasRelation(name: key): boolean;
     }
 }
 
@@ -28,7 +29,7 @@ export const LoadRelations = (world: World) => {
                 relations.set(name, new Map());
             }
 
-            relations.get(name).set(target.id, target);
+            relations.get(name)?.set(target.id, target);
         } else {
             this.add(new Map([[target.id, target]]), relationsSymbol);
         }
@@ -42,7 +43,7 @@ export const LoadRelations = (world: World) => {
             const relation = relations.get(name);
 
             if (single) {
-                return relation.values().next().value;
+                return relation?.values().next().value;
             } else {
                 return relation;
             }
@@ -51,15 +52,15 @@ export const LoadRelations = (world: World) => {
 
     Entity.override(
         "removeRelation",
-        function (this: Entity, name, targetID = null) {
+        function (this: Entity, name, targetID?: string) {
             assert(this.has(relationsSymbol), "Entity has no relations");
             const relations = this.get(relationsSymbol);
-            if (targetID === null) {
+            if (targetID === undefined) {
                 relations.delete(name);
             }
 
             const relation = relations.get(name);
-            relation.delete(targetID);
+            relation?.delete(targetID!);
         }
     );
 };
