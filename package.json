@@ -13,8 +13,7 @@
     "typings": "node ./scripts/typings.js",
     "fullupload": "npm run exports && npm run typings && node ./scripts/publish.js",
     "test": "npm start",
-    "dry": "npm publish --dry-run",
-    "start": "cd ./tests && snowpack dev"
+    "dry": "npm publish --dry-run"
   },
   "keywords": [
     "Game",
@@ -24,12 +23,11 @@
   ],
   "author": "Bagel03",
   "license": "ISC",
-  "devDependencies": {
-    "chalk": "^4.1.2",
-    "snowpack": "^3.8.8"
-  },
   "bugs": {
     "url": "https://github.com/Bagel03/Doge-Engine/issues"
   },
-  "homepage": "https://github.com/Bagel03/Doge-Engine#readme"
+  "homepage": "https://github.com/Bagel03/Doge-Engine#readme",
+  "dependencies": {
+    "typescript": "^4.6.4"
+  }
 }

@@ -1,214 +1,86 @@
-import { ClassMap, isKey, key } from "../utils/classmap";
 import { Class } from "../types/class";
-import { Entity } from "./entity";
-import { System } from "./system";
+import { ClassMap, key } from "../utils/classmap";
 import { Logger, LoggerColors } from "../utils/logger";
-import { assert } from "../utils/assert";
-import { PluginManager } from "../utils/plugin_manager";
-import { generateID } from "../utils/id";
-import { typeID, TypeID } from "../utils/type_id";
+import { Entity } from "./entity";
+import { QueryContainer, QueryManager } from "./query";
+import { System, SystemManager } from "./system";
 
-const logger = new Logger("World", LoggerColors.blue);
+// Holds resources & entities for the world
+export class World {
+    public readonly resources: ClassMap = new ClassMap();
+    public readonly entities: Map<key, Entity> = new Map();
+    private readonly logger = new Logger(LoggerColors.blue);
+    private readonly systemManager = new SystemManager(this);
+    private readonly queryManager = new QueryManager();
 
-// Entities, Systems, Resources, etc
-export class World extends PluginManager<World> {
-    public readonly systems: ClassMap = new ClassMap();
-    public readonly enabledSystems: (Class<System<any>> | string)[] = [];
-
-    private readonly entities: Map<string, Entity> = new Map();
-
-    private readonly systemInfo: {
-        added: Class<System<any>>[];
-        removed: Class<System<any>>[];
-        componentsToSystems: Map<key, Class<System<any>>[]>;
-    } = {
-        added: [],
-        removed: [],
-        componentsToSystems: new Map(),
-    };
-
-    private readonly resources: ClassMap = new ClassMap();
-
-    constructor() {
-        super();
-        logger.log("World Created");
-    }
-
-    spawn(id: string = generateID()) {
-        const ent = new Entity(this, id);
-        this.add(ent);
-        return ent;
-    }
-
-    spawnBundle(bundle: (ent: Entity) => void, id?: string) {
-        const ent = this.spawn(id);
-        bundle(ent);
-        return ent;
-    }
-
-    add(entity: Entity) {
-        assert(
-            !this.entities.has(entity.id),
-            `Entity ${entity.id} already exists`
-        );
-
+    // Entity Stuff
+    addEntity(entity: Entity) {
+        if (this.entities.has(entity.id)) {
+            this.logger.warn(`Added entity with ID ${String(entity.id)} twice`);
+        }
         this.entities.set(entity.id, entity);
-
-        entity.forEach((component, name) =>
-            this._entityAttachComponent(
-                entity,
-                typeof name === "string" ? name : typeID(name)
-            )
-        );
-
-        this.systemInfo.added.forEach((sys) => {
-            this.systems.get(sys)._entityAdded(entity);
-        });
     }
 
-    remove(id: string) {
-        assert(this.entities.has(id), `Entity ${id} does not exist`);
-
-        const entity = this.entities.get(id)!;
-
-        entity.forEach((component, name) => {
-            this._entityRemoveComponent(
-                entity,
-                isKey(name) ? name : typeID(name)
+    removeEntity(id: key) {
+        if (!this.entities.delete(id)) {
+            this.logger.warn(
+                `Could not remove entity with ID ${String(
+                    id
+                )} because it was not added`
             );
-        });
-
-        this.entities.delete(entity.id);
-
-        this.systemInfo.removed.forEach((sys) => {
-            this.systems.get(sys)._entityRemoved(entity);
-        });
+        }
     }
 
-    _entityAttachComponent(entity: Entity, componentTypeID: key) {
-        const systems =
-            this.systemInfo.componentsToSystems.get(componentTypeID);
-        this.systemInfo;
-        if (!systems) return;
-
-        systems.forEach((sys) => {
-            this.systems.get(sys)._componentAdded(entity, componentTypeID);
-        });
-    }
-
-    _entityRemoveComponent(entity: Entity, componentTypeID: key) {
-        const systems =
-            this.systemInfo.componentsToSystems.get(componentTypeID);
-        if (!systems) return;
-
-        systems.forEach((sys) => {
-            this.systems.get(sys)._componentRemoved(entity, componentTypeID);
-        });
-    }
-
-    get(id: string) {
+    getEntity(id: key) {
         return this.entities.get(id);
     }
 
-    //#region System Management
+    // Resource stuff
+    addRes(res: any, key?: key) {
+        this.resources.add(res, key);
+    }
 
-    addSystem(system: System<(string | symbol)[]> | System, name?: string) {
-        //@ts-ignore
-        system.world = this;
-
-        this.systems.set(system, name);
-        this.enabledSystems.push(
-            name ? name : (system.constructor as Class<System<any>>)
-        );
-
-        const { added, removed, components } = system._getQueryStats();
-        if (added)
-            this.systemInfo.added.push(
-                system.constructor as Class<System<any>>
+    removeRes(key: Class | key) {
+        if (!this.resources.delete(key)) {
+            this.logger.warn(
+                `Can not remove resource ${String(
+                    key
+                )} because it was never added`
             );
-        if (removed)
-            this.systemInfo.removed.push(
-                system.constructor as Class<System<any>>
-            );
-        if (components) {
-            for (const component of components) {
-                const systems =
-                    this.systemInfo.componentsToSystems.get(component);
-                if (!systems) {
-                    this.systemInfo.componentsToSystems.set(component, [
-                        system.constructor as Class<System<any>>,
-                    ]);
-                } else {
-                    systems.push(system.constructor as Class<System<any>>);
-                }
-            }
         }
-
-        logger.log(`Added system ${name ? name : system.constructor.name}`);
     }
 
-    enableSystem(system: Class<System<any>> | string) {
-        this.enabledSystems.push(system);
-
-        logger.log(
-            `Enabled system ${
-                typeof system === "string" ? system : system.name
-            }`
-        );
+    getRes<T>(key: key | Class<T>) {
+        return this.resources.get<T>(key);
     }
 
-    disableSystem(system: Class<System<any>> | string) {
-        this.enabledSystems.filter((sys) => sys !== system);
-
-        logger.log(
-            `Disabled system ${
-                typeof system === "string" ? system : system.constructor.name
-            }`
-        );
+    // System stuff
+    addSystem(system: System, enabled = true) {
+        this.systemManager.addSystem(system, enabled);
     }
 
-    //#endregion
-
-    //#region Resource Management
-
-    addResource(resource: any, name?: string) {
-        this.resources.set(resource, name);
-        logger.log(`Added resource ${name ? name : resource.constructor.name}`);
+    addPureSystem(system: System, enabled = true) {
+        this.systemManager.addPureSystem(system, enabled);
     }
 
-    getResource<T>(resource: Class<T> | string) {
-        return this.resources.get(resource) as T;
+    enableSystem(system: System) {
+        this.systemManager.enableSystem(system);
     }
 
-    removeResource(resource: Class<any> | string) {
-        this.resources.delete(resource);
-        logger.log(
-            `Removed resource ${
-                typeof resource === "string" ? resource : resource.name
-            }`
-        );
+    disableSystem(system: System) {
+        this.systemManager.disableSystem(system);
     }
 
-    clearResources() {
-        this.resources.clear();
-        logger.log("Cleared all resources");
+    // Query stuff
+    addQuery(query: QueryContainer, id: string) {
+        this.queryManager.add(query, id);
     }
 
-    //#endregion
+    removeQuery(queryID: string) {
+        this.queryManager.remove(queryID);
+    }
 
-    update(...systems: (Class<System<any>> | string)[] | ["all"]) {
-        if (systems[0] === "all") systems = this.enabledSystems;
-
-        systems.forEach((system) => {
-            const sys = this.systems.get(system);
-            assert(
-                sys,
-                `Can not update system "${
-                    typeof system === "string" ? system : system.name
-                }" does not exist`
-            );
-
-            sys._updateInternal();
-        });
+    getQuery(queryID: string) {
+        this.queryManager.get(queryID);
     }
 }
