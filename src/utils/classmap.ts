@@ -1,7 +1,6 @@
-// TODO: string config
-import { Class } from "../types/class";
 import { typeID } from "./type_id";
 
+export type Class<T = any> = new (...args: any[]) => T;
 export type key = string | number | symbol;
 export const isKey = (key: any): key is key => {
     return (
@@ -30,16 +29,15 @@ export class ClassMap<C extends object = any> {
         return this.map.has(this.parseKey(key));
     }
 
-    set(instance: C, name?: key): ClassMap {
+    add(instance: C, name?: key): ClassMap {
         this.map.set(name === undefined ? typeID(instance) : name, instance);
         return this;
     }
-
-    delete(key: Class<C> | key): boolean {
+    delete(key: Class<C> | key) {
         return this.map.delete(this.parseKey(key));
     }
 
-    clear() {
+    clear() { 
         this.map.clear();
     }
 
