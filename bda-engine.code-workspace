@@ -14,9 +14,9 @@
             "**/.vscode": true,
             "**/Thumbs.db": true,
             // "**/node_modules": true,
-            "**/package-lock.json": true,
+            "**/package-lock.json": true
             // "**/build": true,
-            "**/typings": true
+            // "**/typings": true
         },
         "workbench.colorCustomizations": {
             "activityBar.background": "#20837b6e",

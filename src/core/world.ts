@@ -2,7 +2,7 @@ import { Class } from "../types/class";
 import { ClassMap, key } from "../utils/classmap";
 import { Logger, LoggerColors } from "../utils/logger";
 import { Entity } from "./entity";
-import { QueryContainer, QueryEvents, QueryManager } from "./query";
+import { QueryContainer, QueryManager } from "./query";
 import { System, SystemManager } from "./system";
 
 // Holds resources & entities for the world

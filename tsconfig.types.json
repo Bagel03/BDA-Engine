@@ -5,7 +5,8 @@
         "declaration": true,
         "emitDeclarationOnly": true,
         "skipLibCheck": true,
-        "outDir": "./typings-temp"
+        "outDir": "./typings-temp",
+        "stripInternal": true /* Turn this on to remove part of the API from the public */
     },
     "include": ["src/**/*.ts"]
 }

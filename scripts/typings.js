@@ -1,8 +1,10 @@
-const { execSync } = require("child_process");
-const { readFileSync, writeFileSync } = require("fs");
-const { join } = require("path");
-const { greenBright, blueBright } = require("chalk");
-const { version } = require("../package.json");
+import { execSync } from "child_process";
+import { readFileSync, writeFileSync } from "fs";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import json from "../package.json" assert { type: "json" };
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const { version } = json;
 
 const options = [
     "out-file=typings/types.d.ts",
@@ -13,7 +15,7 @@ const options = [
 
 const optionsStr = `--${options.join` --`}`;
 
-console.log(blueBright`[Typings] Starting to build typings...`);
+console.log(`[Typings] Starting to build typings...`);
 
 execSync(
     `dts-bundle-generator src/exports.ts ${optionsStr}`,
@@ -25,8 +27,8 @@ execSync(
     }
 );
 
-console.log(greenBright`[Typings] Finished building typings`);
-console.log(blueBright`[Typings] Processing typings...`);
+console.log(`[Typings] Finished building typings`);
+console.log(`[Typings] Processing typings...`);
 
 // Add the banner
 const banner = `\tBDA Engine v${version} ©Bagel03 2022
@@ -41,5 +43,5 @@ str = str.replaceAll(`_`, `private _`);
 
 writeFileSync(path, str);
 
-console.log(greenBright`[Typings] Finished processing typings`);
-console.log(greenBright.bold`[Typings] Finished typings`);
+console.log(`[Typings] Finished processing typings`);
+console.log(`[Typings] Finished typings`);

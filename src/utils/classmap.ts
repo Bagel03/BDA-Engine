@@ -1,6 +1,5 @@
 import { type, typeID } from "./type_id";
-
-export type Class<T = any> = new (...args: any[]) => T;
+import type { Class } from "../types/class";
 export type key = string | number | symbol;
 export const isKey = (key: any): key is key => {
     return (

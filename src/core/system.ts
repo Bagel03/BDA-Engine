@@ -1,4 +1,3 @@
-import { sys, textChangeRangeIsUnchanged } from "typescript";
 import { key } from "../utils/classmap";
 import { Logger, LoggerColors } from "../utils/logger";
 import { Entity } from "./entity";

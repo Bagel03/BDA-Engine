@@ -1,5 +1,6 @@
-import { Class, key, keyify } from "../utils/classmap";
+import { key, keyify } from "../utils/classmap";
 import { Entity } from "./entity";
+import { Class } from "../types/class";
 
 /** @symbol */
 export enum QueryEvents {

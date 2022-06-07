@@ -2,7 +2,7 @@
   "name": "doge-engine",
   "version": "0.0.2",
   "description": "A simple game framework built in TS",
-  "main": "./build/test/test.js",
+  "main": "./build/exports.js",
   "types": "./typings/types.d.ts",
   "type": "module",
   "files": [
