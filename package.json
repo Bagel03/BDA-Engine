@@ -2,8 +2,9 @@
   "name": "doge-engine",
   "version": "0.0.2",
   "description": "A simple game framework built in TS",
-  "main": "./build/exports.js",
+  "main": "./build/test/test.js",
   "types": "./typings/types.d.ts",
+  "type": "module",
   "files": [
     "build/src",
     "typings"
@@ -13,7 +14,9 @@
     "typings": "node ./scripts/typings.js",
     "fullupload": "npm run exports && npm run typings && node ./scripts/publish.js",
     "test": "npm start",
-    "dry": "npm publish --dry-run"
+    "start": "ts-node src/test/test",
+    "watch": "nodemon --exec \"ts-node src/test/test\" -e ts",
+    "builder": "cd builder && tsc"
   },
   "keywords": [
     "Game",
@@ -28,6 +31,7 @@
   },
   "homepage": "https://github.com/Bagel03/Doge-Engine#readme",
   "dependencies": {
-    "typescript": "^4.6.4"
+    "ttypescript": "^1.5.13",
+    "typescript": "^4.7.3"
   }
 }

@@ -13,9 +13,9 @@
             "**/.DS_Store": true,
             "**/.vscode": true,
             "**/Thumbs.db": true,
-            "**/node_modules": true,
+            // "**/node_modules": true,
             "**/package-lock.json": true,
-            "**/build": true,
+            // "**/build": true,
             "**/typings": true
         },
         "workbench.colorCustomizations": {
@@ -24,6 +24,7 @@
             "titleBar.activeForeground": "#F7FBFA",
             "activityBar.inactiveForeground": "#F7FBFA"
         },
-        "search.useIgnoreFiles": false
+        "search.useIgnoreFiles": false,
+        "cSpell.words": ["keyify"]
     }
 }

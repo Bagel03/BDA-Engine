@@ -6,9 +6,12 @@ export const createEntityDeclaration = (
     factory: ts.NodeFactory,
     worldName: string
 ) => {
-    const idNode = type.typeArguments[0];
+    const idNode = type.typeArguments?.[0];
+    if (!idNode) {
+        throw new Error("No ID for entity");
+    }
 
-    let expression: ts.Expression;
+    let expression: ts.Expression | null = null;
 
     if (ts.isLiteralTypeNode(idNode)) {
         if (idNode.literal.kind === ts.SyntaxKind.StringLiteral)
@@ -24,7 +27,7 @@ export const createEntityDeclaration = (
 
     if (!expression) {
         console.log("Unsupported entity access type");
-        return;
+        throw new Error("Unsupported entity access type");
     }
 
     return factory.createVariableDeclaration(

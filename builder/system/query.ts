@@ -22,14 +22,27 @@ export const createQueryDeclarationAndSetup = (
         )
     );
 
-    const arr = type.typeArguments[0];
+    const arr = type.typeArguments?.[0];
+    if (!arr) throw new Error("No array");
     if (!ts.isTupleTypeNode(arr)) {
         console.log(`Incorrect first query argument, must be tuple type`);
-        return;
+        throw new Error(`Incorrect first query argument, must be tuple type`);
     }
 
     const names = arr.elements.map((el) => {
-        return factory.createIdentifier(el.getText()); // TODO aliases
+        if (ts.isTupleTypeNode(el)) {
+            console.log("tuple type el");
+            const child = el.elements[1]; // ["[", "Type",, "Name", "]"]
+            console.log(child.getText());
+            if (ts.isLiteralTypeNode(child)) {
+                if (child.literal.kind === ts.SyntaxKind.StringLiteral)
+                    return factory.createStringLiteral(child.literal.text);
+                else if (child.literal.kind === ts.SyntaxKind.NumericLiteral)
+                    return factory.createNumericLiteral(child.literal.text);
+            }
+            console.log("Unknown query component ID type");
+        }
+        return factory.createIdentifier(el.getText());
     });
 
     const setup = factory.createCallExpression(

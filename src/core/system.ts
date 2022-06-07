@@ -1,4 +1,4 @@
-import { textChangeRangeIsUnchanged } from "typescript";
+import { sys, textChangeRangeIsUnchanged } from "typescript";
 import { key } from "../utils/classmap";
 import { Logger, LoggerColors } from "../utils/logger";
 import { Entity } from "./entity";
@@ -6,8 +6,8 @@ import { FastQuery, Query } from "./query";
 import { World } from "./world";
 
 // TODO: Make this not hacky
-type Res<T, N extends key = "__none__"> = T;
-type Ent<N extends key = "__none__"> = Res<Entity, N>;
+export type Res<T, N extends key = string> = T;
+export type Ent<N extends key = string> = Res<Entity, N>;
 
 type systemPram = Res<any, key> | Ent<key> | Query<any[]> | FastQuery | World;
 
@@ -21,9 +21,9 @@ declare global {
 }
 
 export class SystemManager {
-    private readonly systems: Set<PureSystem>;
-    private readonly enabledSystems: System[];
-    private readonly logger = new Logger(LoggerColors.purple);
+    private readonly systems: Set<PureSystem> = new Set();
+    private readonly enabledSystems: System[] = [];
+    private readonly logger = new Logger("Systems", LoggerColors.purple);
     constructor(public readonly world: World) {}
 
     addPureSystem(system: PureSystem, enabled = true) {
@@ -37,7 +37,7 @@ export class SystemManager {
         // DANGER ZONE
         // Check if the compiler has edited this one (it was marked with @system)
         // @ts-ignore
-        if (system(this.world, true) === "__system__") {
+        if (system(this.world, true) !== "__system__") {
             this.logger.error(
                 `Refusing to add a system that was not marked with the "@system" tag`
             );
@@ -46,6 +46,7 @@ export class SystemManager {
 
         this.systems.add(system);
         if (enabled) this.enabledSystems.push(system);
+
         this.logger.info(`Added system ${system.name}`);
     }
 
@@ -65,7 +66,7 @@ export class SystemManager {
     }
 
     update(...systems: System[]) {
-        if (!systems) systems = this.enabledSystems;
+        if (systems.length === 0) systems = this.enabledSystems;
         systems.forEach((sys) => sys(this.world, false));
     }
 

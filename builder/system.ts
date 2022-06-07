@@ -1,6 +1,7 @@
 import * as ts from "typescript";
 import { createEntityDeclaration } from "./system/entity";
 import { createQueryDeclarationAndSetup } from "./system/query";
+import { createResDeclaration } from "./system/res";
 
 export const convertSystem = (
     node: ts.FunctionDeclaration,
@@ -26,7 +27,8 @@ export const convertSystem = (
     const ifBlockStatements: ts.Statement[] = [];
 
     const pramStatements = node.parameters.map((pram) => {
-        if (!ts.isTypeReferenceNode(pram.type)) return; // Remove this when doing world queries
+        if (!pram.type || !ts.isTypeReferenceNode(pram.type))
+            throw new Error("Not a world"); // Remove this when doing world queries
 
         switch (pram.type.typeName.getText()) {
             case "Ent": {
@@ -51,6 +53,15 @@ export const convertSystem = (
                     factory.createExpressionStatement(setup)
                 );
                 return getter;
+            }
+
+            case "Res": {
+                return createResDeclaration(
+                    pram,
+                    pram.type,
+                    factory,
+                    worldName
+                );
             }
 
             default: {
@@ -83,6 +94,9 @@ export const convertSystem = (
         )
     );
 
+    if (!node.body) {
+        throw new Error("No body");
+    }
     const body = factory.createBlock(
         [ifStatement, varsStatement, ...node.body.statements],
         true

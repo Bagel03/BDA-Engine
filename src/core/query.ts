@@ -1,5 +1,11 @@
-import { Class, key } from "../utils/classmap";
+import { Class, key, keyify } from "../utils/classmap";
 import { Entity } from "./entity";
+
+/** @symbol */
+export enum QueryEvents {
+    Added,
+    Removed,
+}
 
 //#region Query impls
 export abstract class QueryContainer {
@@ -32,18 +38,34 @@ export class FastQuery extends QueryContainer implements IterableQuery {
     }
 }
 
+type extractTypes<T extends any[]> = {
+    [I in keyof T]: T[I] extends [any, key] ? T[I][0] : T[I];
+};
+
+class Foo {
+    number: number = 5;
+}
+
+class Bar {
+    str: string = "5";
+}
+
+type a = extractTypes<[Foo, [Bar, "bar"]]>;
+
 export class Query<T extends any[]>
     extends QueryContainer
     implements IterableQuery
 {
-    private readonly types: (Class | key)[];
+    private readonly types: key[];
 
     constructor(
-        checker: (entity: Entity) => boolean,
-        ...types: (key | Class)[]
+        types: (key | Class)[],
+        checker: (entity: Entity) => boolean = (ent) => true
     ) {
-        super(checker);
-        this.types = types;
+        super(
+            (ent) => this.types.every((comp) => ent.has(comp)) && checker(ent)
+        );
+        this.types = types.map(keyify);
     }
 
     *[Symbol.iterator](): IterableIterator<[...T, Entity]> {
@@ -94,6 +116,14 @@ export class QueryManager {
                 this.queries.get(queryID)!.check(entity);
             }
         }
+    }
+
+    removeEntity(entity: Entity) {
+        this.queries.forEach((query) => query.remove(entity));
+    }
+
+    addEntity(entity: Entity) {
+        this.queries.forEach((query) => query.check(entity));
     }
 }
 //#endregion

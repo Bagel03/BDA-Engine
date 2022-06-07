@@ -1,4 +1,4 @@
-import { typeID } from "./type_id";
+import { type, typeID } from "./type_id";
 
 export type Class<T = any> = new (...args: any[]) => T;
 export type key = string | number | symbol;
@@ -10,6 +10,9 @@ export const isKey = (key: any): key is key => {
     );
 };
 
+export function keyify(key: Class | key) {
+    return isKey(key) ? key : typeID(key);
+}
 export class ClassMap<C extends object = any> {
     private readonly map: Map<key, any> = new Map();
 
@@ -17,16 +20,12 @@ export class ClassMap<C extends object = any> {
         return this.map.size;
     }
 
-    private parseKey(key: Class<C> | key): key {
-        return isKey(key) ? key : typeID(key);
-    }
-
     get<T extends C>(key: Class<T> | key): T {
-        return this.map.get(this.parseKey(key));
+        return this.map.get(keyify(key));
     }
 
     has(key: Class<C> | key) {
-        return this.map.has(this.parseKey(key));
+        return this.map.has(keyify(key));
     }
 
     add(instance: C, name?: key): ClassMap {
@@ -34,10 +33,10 @@ export class ClassMap<C extends object = any> {
         return this;
     }
     delete(key: Class<C> | key) {
-        return this.map.delete(this.parseKey(key));
+        return this.map.delete(keyify(key));
     }
 
-    clear() { 
+    clear() {
         this.map.clear();
     }
 

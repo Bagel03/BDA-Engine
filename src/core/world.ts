@@ -2,14 +2,14 @@ import { Class } from "../types/class";
 import { ClassMap, key } from "../utils/classmap";
 import { Logger, LoggerColors } from "../utils/logger";
 import { Entity } from "./entity";
-import { QueryContainer, QueryManager } from "./query";
+import { QueryContainer, QueryEvents, QueryManager } from "./query";
 import { System, SystemManager } from "./system";
 
 // Holds resources & entities for the world
 export class World {
     public readonly resources: ClassMap = new ClassMap();
     public readonly entities: Map<key, Entity> = new Map();
-    private readonly logger = new Logger(LoggerColors.blue);
+    private readonly logger = new Logger("world", LoggerColors.blue);
     private readonly systemManager = new SystemManager(this);
     private readonly queryManager = new QueryManager();
 
@@ -19,15 +19,15 @@ export class World {
             this.logger.warn(`Added entity with ID ${String(entity.id)} twice`);
         }
         this.entities.set(entity.id, entity);
+        entity.world = this;
+
+        this.queryManager.addEntity(entity);
     }
 
     removeEntity(id: key) {
-        if (!this.entities.delete(id)) {
-            this.logger.warn(
-                `Could not remove entity with ID ${String(
-                    id
-                )} because it was not added`
-            );
+        const entity = this.entities.get(id);
+        if (!entity) {
+            this.logger.warn(`Can not remove entity `);
         }
     }
 
@@ -71,9 +71,16 @@ export class World {
         this.systemManager.disableSystem(system);
     }
 
+    update(...systems: System[]) {
+        this.systemManager.update(...systems);
+    }
+    updateComplex(fn: (system: System) => boolean, disabled = false) {
+        this.systemManager.updateComplex(fn, disabled);
+    }
     // Query stuff
     addQuery(query: QueryContainer, id: string) {
         this.queryManager.add(query, id);
+        this.entities.forEach((ent) => query.check(ent));
     }
 
     removeQuery(queryID: string) {
@@ -81,6 +88,11 @@ export class World {
     }
 
     getQuery(queryID: string) {
-        this.queryManager.get(queryID);
+        return this.queryManager.get(queryID);
+    }
+
+    /** @internal */
+    queryEvent(entity: Entity, event: key) {
+        this.queryManager.event(event, entity);
     }
 }
