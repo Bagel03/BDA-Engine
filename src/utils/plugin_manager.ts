@@ -1,7 +1,6 @@
-import { World } from "../core/world";
-import { nameSymbol } from "../config/symbols";
 import { Logger, LoggerColors } from "./logger";
 import { Class } from "../types/class";
+import { nameSymbol } from "../config/symbols";
 
 type Plugin<T> = (world: T) => any;
 

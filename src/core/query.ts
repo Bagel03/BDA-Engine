@@ -2,12 +2,6 @@ import { key, keyify } from "../utils/classmap";
 import { Entity } from "./entity";
 import { Class } from "../types/class";
 
-/** @symbol */
-export enum QueryEvents {
-    Added,
-    Removed,
-}
-
 //#region Query impls
 export abstract class QueryContainer {
     protected readonly entities: Set<Entity> = new Set();

@@ -1,6 +1,7 @@
 import { ClassMap, key, keyify } from "../utils/classmap";
 import { World } from "./world";
 import { Class } from "../types/class";
+import { assert } from "../utils/assert";
 
 export interface defaultComponents {
     [key: key]: any;

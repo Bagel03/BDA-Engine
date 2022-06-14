@@ -1,9 +1,16 @@
 import { Class } from "../types/class";
+import { assert } from "../utils/assert";
 import { ClassMap, key } from "../utils/classmap";
 import { Logger, LoggerColors } from "../utils/logger";
 import { Entity } from "./entity";
 import { QueryContainer, QueryManager } from "./query";
 import { System, SystemManager } from "./system";
+
+declare global {
+    interface Window {
+        readonly GLOBAL_WORLD: World;
+    }
+}
 
 // Holds resources & entities for the world
 export class World {
@@ -12,6 +19,13 @@ export class World {
     private readonly logger = new Logger("world", LoggerColors.blue);
     private readonly systemManager = new SystemManager(this);
     private readonly queryManager = new QueryManager();
+
+    constructor() {
+        assert(!window.GLOBAL_WORLD, "Multiple worlds not yet supported")
+        //@ts-ignore
+        window.GLOBAL_WORLD = this;
+    }
+
 
     // Entity Stuff
     addEntity(entity: Entity) {
@@ -26,9 +40,9 @@ export class World {
 
     removeEntity(id: key) {
         const entity = this.entities.get(id);
-        if (!entity) {
-            this.logger.warn(`Can not remove entity `);
-        }
+        assert(entity, "Can not remove entity that was never added");
+        this.queryManager.removeEntity(entity);
+        this.entities.delete("id");
     }
 
     getEntity(id: key) {
