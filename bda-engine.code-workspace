@@ -13,14 +13,14 @@
             "**/.DS_Store": true,
             "**/.vscode": true,
             "**/Thumbs.db": true,
-            // "**/node_modules": true,
-            "**/package-lock.json": true
-            // "**/build": true,
-            // "**/typings": true
+            "**/node_modules": true,
+            "**/package-lock.json": true,
+            "**/dist": true,
+            "**/typings": true
         },
         "workbench.colorCustomizations": {
-            "activityBar.background": "#20837b6e",
-            "titleBar.activeBackground": "#0caf9475",
+            "activityBar.background": "#18f8b56e",
+            "titleBar.activeBackground": "#14fa7b96",
             "titleBar.activeForeground": "#F7FBFA",
             "activityBar.inactiveForeground": "#F7FBFA"
         },

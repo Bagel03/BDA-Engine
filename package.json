@@ -5,7 +5,7 @@
   "main": "./build/exports.js",
   "types": "./typings/types.d.ts",
   "files": [
-    "build/src",
+    "dist/**/*.js",
     "typings"
   ],
   "scripts": {
