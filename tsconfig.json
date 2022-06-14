@@ -101,7 +101,7 @@
         "skipLibCheck": true /* Skip type checking all .d.ts files. */,
         "plugins": [
             {
-                "transform": "./builder/build/transformer.js",
+                "transform": "./dist/transformer.js",
                 "type": "raw"
             }
         ]

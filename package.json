@@ -12,7 +12,7 @@
     "exports": "node ./scripts/exports.mjs",
     "typings": "node ./scripts/typings.mjs",
     "build-engine": "webpack",
-    "build-transformer": "cd builder && webpack",
+    "build-transformer": "cd transformer && webpack",
     "build": "npm run exports && npm run typings && npm run build-transformer && npm run build-engine"
   },
   "exports": {

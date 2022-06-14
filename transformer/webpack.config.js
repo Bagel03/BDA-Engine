@@ -10,6 +10,11 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, "..", "dist"),
     filename: "transformer.js",
+    library: {
+      type: "commonjs2",
+      name: "default",
+      export: "default"
+    } 
   },
   externals: {
     typescript: 'commonjs2 typescript'
