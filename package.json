@@ -2,11 +2,11 @@
   "name": "bda-engine",
   "version": "0.0.0",
   "description": "A simple game framework built in TS",
-  "main": "./build/exports.js",
+  "main": "./dist/lib.js",
   "types": "./typings/types.d.ts",
   "files": [
     "dist/**/*.js",
-    "typings"
+    "typings/**/*"
   ],
   "scripts": {
     "exports": "node ./scripts/exports.mjs",
