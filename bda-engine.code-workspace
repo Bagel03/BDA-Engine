@@ -25,6 +25,8 @@
             "activityBar.inactiveForeground": "#F7FBFA"
         },
         "search.useIgnoreFiles": false,
-        "cSpell.words": ["keyify"]
+        "cSpell.words": [
+            "keyify"
+        ]
     }
 }
