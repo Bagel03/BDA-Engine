@@ -24,9 +24,10 @@
             "titleBar.activeForeground": "#F7FBFA",
             "activityBar.inactiveForeground": "#F7FBFA"
         },
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "prettier.tabWidth": 4,
         "search.useIgnoreFiles": false,
-        "cSpell.words": [
-            "keyify"
-        ]
+        "cSpell.words": ["keyify"]
     }
 }

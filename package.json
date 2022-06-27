@@ -35,6 +35,7 @@
   },
   "homepage": "https://github.com/Bagel03/Doge-Engine#readme",
   "dependencies": {
+    "bda-engine": "file:bda-engine-0.0.0.tgz",
     "typescript": "^4.7.3"
   },
   "devDependencies": {

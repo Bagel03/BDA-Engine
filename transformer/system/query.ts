@@ -1,4 +1,37 @@
+import { type } from "bda-engine";
 import * as ts from "typescript";
+
+const literalTypeToValue = (type: ts.LiteralTypeNode | ts.TypeQueryNode) => {
+    if (ts.isTypeQueryNode(type)) {
+        return ts.factory.createIdentifier(type.exprName.getText());
+    }
+    if (type.literal.kind === ts.SyntaxKind.StringLiteral) {
+        return ts.factory.createStringLiteral(type.literal.getText());
+    }
+    if (type.literal.kind === ts.SyntaxKind.NumericLiteral) {
+        return ts.factory.createNumericLiteral(type.literal.getText());
+    }
+    throw new Error("Incorrect literal type");
+};
+
+const functionFy = (node: ts.TypeNode) => {
+    ts.isTypeNode;
+    if (ts.isTypeReferenceNode(node) && node.typeArguments.length > 0) {
+        return ts.factory.createCallExpression(
+            ts.factory.createIdentifier(node.typeName.getText()),
+            [],
+            node.typeArguments.map(functionFy)
+        );
+    }
+    if (ts.isTypeReferenceNode(node)) {
+        return ts.factory.createIdentifier(node.typeName.getText());
+    }
+    if (ts.isLiteralTypeNode(node) || ts.isTypeQueryNode(node)) {
+        return literalTypeToValue(node);
+    }
+
+    throw new Error(`Couldn't function-fy ${node.kind}`);
+};
 
 let currentQueryID = 0;
 
@@ -31,19 +64,24 @@ export const createQueryDeclarationAndSetup = (
 
     const names = arr.elements.map((el) => {
         if (ts.isTupleTypeNode(el)) {
-            console.log("tuple type el");
             const child = el.elements[1]; // ["[", "Type",, "Name", "]"]
-            console.log(child.getText());
-            if (ts.isLiteralTypeNode(child)) {
-                if (child.literal.kind === ts.SyntaxKind.StringLiteral)
-                    return factory.createStringLiteral(child.literal.text);
-                else if (child.literal.kind === ts.SyntaxKind.NumericLiteral)
-                    return factory.createNumericLiteral(child.literal.text);
+            if (ts.isLiteralTypeNode(child) || ts.isTypeQueryNode(child)) {
+                return literalTypeToValue(child);
             }
             console.log("Unknown query component ID type");
         }
         return factory.createIdentifier(el.getText());
     });
+
+    const checkerType = type.typeArguments?.[1];
+
+    let expression;
+    if (checkerType) {
+        expression = functionFy(checkerType);
+    }
+    const queryPrams = expression
+        ? [factory.createArrayLiteralExpression(names), expression]
+        : [factory.createArrayLiteralExpression(names)];
 
     const setup = factory.createCallExpression(
         factory.createPropertyAccessExpression(
@@ -55,7 +93,7 @@ export const createQueryDeclarationAndSetup = (
             factory.createNewExpression(
                 factory.createIdentifier(type.typeName.getText()),
                 undefined,
-                [factory.createArrayLiteralExpression(names)]
+                queryPrams
             ),
             factory.createStringLiteral(currentQueryID.toString()),
         ]
