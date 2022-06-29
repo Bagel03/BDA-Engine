@@ -4,8 +4,9 @@
   "description": "A simple game framework built in TS",
   "main": "./dist/lib.js",
   "types": "./typings/types.d.ts",
+  "type": "commonjs",
   "files": [
-    "dist/**/*.js",
+    "dist/**/*",
     "typings/**/*"
   ],
   "scripts": {
@@ -17,9 +18,9 @@
   },
   "exports": {
     ".": {
-      "default": "./dist/lib.js",
-      "engine": "./dist/lib.js",
-      "transformer": "./dist/transformer.js"
+      "default": "./dist/lib.mjs",
+      "/engine": "./dist/lib.mjs",
+      "/transformer": "./dist/transformer.js"
     }
   },
   "keywords": [
@@ -35,7 +36,6 @@
   },
   "homepage": "https://github.com/Bagel03/Doge-Engine#readme",
   "dependencies": {
-    "bda-engine": "file:bda-engine-0.0.0.tgz",
     "typescript": "^4.7.3"
   },
   "devDependencies": {

@@ -12,6 +12,8 @@ declare global {
     }
 }
 
+const window = {} as Window;
+
 // Holds resources & entities for the world
 export class World {
     public readonly resources: ClassMap = new ClassMap();
@@ -21,11 +23,10 @@ export class World {
     private readonly queryManager = new QueryManager();
 
     constructor() {
-        assert(!window.GLOBAL_WORLD, "Multiple worlds not yet supported")
+        assert(!window.GLOBAL_WORLD, "Multiple worlds not yet supported");
         //@ts-ignore
         window.GLOBAL_WORLD = this;
     }
-
 
     // Entity Stuff
     addEntity(entity: Entity) {

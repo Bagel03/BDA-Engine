@@ -33,41 +33,31 @@ export class FastQuery extends QueryContainer implements IterableQuery {
     }
 }
 
-class QueryModifier {
-    static check(ent: Entity): boolean {
-        return true;
-    }
-}
+// Export the type as well as null so that importing works both at compile time and runtime
+export type QueryModifier = (ent: Entity) => boolean;
+export const QueryModifier = null;
 
-export const queryModifier = (checker: (ent: Entity) => boolean) =>
-    class extends QueryModifier {
-        static check = checker;
-    };
+type extractTypes<T extends any[]> = {
+    [I in keyof T]: T[I] extends [any, key] ? T[I][0] : T[I];
+};
 
-export class Query<
-        C extends any[],
-        F extends typeof QueryModifier = typeof QueryModifier
-    >
+export class Query<C extends any[], M extends QueryModifier = () => true>
     extends QueryContainer
     implements IterableQuery
 {
     private readonly types: key[];
 
-    constructor(types: (key | Class)[], checker?: F) {
-        if (checker) {
-            super(
-                (ent) =>
-                    this.types.every((comp) => ent.has(comp)) &&
-                    checker.check(ent)
-            );
-        } else {
-            super((ent) => this.types.every((comp) => ent.has(comp)));
-        }
-
+    constructor(
+        types: (key | Class)[],
+        checker: QueryModifier = (ent: Entity) => true
+    ) {
+        super(
+            (ent) => this.types.every((comp) => ent.has(comp)) && checker(ent)
+        );
         this.types = types.map(keyify);
     }
 
-    *[Symbol.iterator](): IterableIterator<[...C, Entity]> {
+    *[Symbol.iterator](): IterableIterator<[...extractTypes<C>, Entity]> {
         for (const entity of this.entities.values()) {
             yield [...(this.types.map(entity.get, entity) as C), entity];
         }

@@ -1,24 +1,29 @@
-import { type } from "bda-engine";
 import * as ts from "typescript";
 
 const literalTypeToValue = (type: ts.LiteralTypeNode | ts.TypeQueryNode) => {
     if (ts.isTypeQueryNode(type)) {
         return ts.factory.createIdentifier(type.exprName.getText());
     }
-    if (type.literal.kind === ts.SyntaxKind.StringLiteral) {
-        return ts.factory.createStringLiteral(type.literal.getText());
+    if (ts.isLiteralTypeNode(type)) {
+        if (type.literal.kind === ts.SyntaxKind.StringLiteral) {
+            return ts.factory.createStringLiteral(type.literal.getText());
+        }
+
+        if (type.literal.kind === ts.SyntaxKind.NumericLiteral) {
+            return ts.factory.createNumericLiteral(type.literal.getText());
+        }
     }
-    if (type.literal.kind === ts.SyntaxKind.NumericLiteral) {
-        return ts.factory.createNumericLiteral(type.literal.getText());
-    }
+
     throw new Error("Incorrect literal type");
 };
 
 const functionFy = (node: ts.TypeNode) => {
-    ts.isTypeNode;
     if (ts.isTypeReferenceNode(node) && node.typeArguments.length > 0) {
         return ts.factory.createCallExpression(
+            // ts.factory.createPropertyAccessExpression(
             ts.factory.createIdentifier(node.typeName.getText()),
+            //     "call"
+            // ),
             [],
             node.typeArguments.map(functionFy)
         );
@@ -30,7 +35,7 @@ const functionFy = (node: ts.TypeNode) => {
         return literalTypeToValue(node);
     }
 
-    throw new Error(`Couldn't function-fy ${node.kind}`);
+    throw new Error(`Couldn't function-fy ${node}`);
 };
 
 let currentQueryID = 0;

@@ -64,4 +64,4 @@ const transformer: ts.TransformerFactory<ts.SourceFile> = (context) => {
     };
 };
 
-export default transformer;
+export default (program: ts.Program, config: ts.PluginConfig) => transformer;
