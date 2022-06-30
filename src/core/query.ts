@@ -1,6 +1,7 @@
 import { key, keyify } from "../utils/classmap";
 import { Entity } from "./entity";
 import { Class } from "../types/class";
+import { assert } from "../exports";
 
 //#region Query impls
 export abstract class QueryContainer {
@@ -61,6 +62,14 @@ export class Query<C extends any[], M extends QueryModifier = () => true>
         for (const entity of this.entities.values()) {
             yield [...(this.types.map(entity.get, entity) as C), entity];
         }
+    }
+
+    single(): Entity {
+        assert(
+            this.entities.size === 1,
+            `Query.single() called on query with ${this.entities.size} targets`
+        );
+        return Array.from(this.entities)[0];
     }
 }
 //#endregion

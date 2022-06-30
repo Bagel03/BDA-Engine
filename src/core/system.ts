@@ -4,7 +4,8 @@ import { Entity } from "./entity";
 import { FastQuery, Query } from "./query";
 import { World } from "./world";
 
-// TODO: Make this not hacky
+export const Res = null,
+    Ent = null;
 export type Res<T, N extends key = string> = T;
 export type Ent<N extends key = string> = Res<Entity, N>;
 
