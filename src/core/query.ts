@@ -35,14 +35,14 @@ export class FastQuery extends QueryContainer implements IterableQuery {
 }
 
 // Export the type as well as null so that importing works both at compile time and runtime
-export type QueryModifier = (ent: Entity) => boolean;
+export type QueryModifier = [(ent: Entity) => boolean, key[]?];
 export const QueryModifier = null;
 
 type extractTypes<T extends any[]> = {
     [I in keyof T]: T[I] extends [any, key] ? T[I][0] : T[I];
 };
 
-export class Query<C extends any[], M extends QueryModifier = () => true>
+export class Query<C extends any[], M extends QueryModifier = [() => true]>
     extends QueryContainer
     implements IterableQuery
 {
@@ -50,11 +50,15 @@ export class Query<C extends any[], M extends QueryModifier = () => true>
 
     constructor(
         types: (key | Class)[],
-        checker: QueryModifier = (ent: Entity) => true
+        checker: QueryModifier = [(ent: Entity) => true]
     ) {
         super(
-            (ent) => this.types.every((comp) => ent.has(comp)) && checker(ent)
+            (ent) =>
+                this.types.every((comp) => ent.has(comp)) && checker[0](ent)
         );
+
+        checker[1] && checker[1].forEach(this.interestedEvents.add);
+
         this.types = types.map(keyify);
     }
 

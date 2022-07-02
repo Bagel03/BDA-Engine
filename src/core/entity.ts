@@ -8,26 +8,30 @@ export interface defaultComponents {
 }
 
 export class Entity {
-    private static readonly defaultComponents: Record<key, (ent: Entity) => any> = {}; 
-    static addDefaultComponent(key: key|Class, func: () => any) {
+    private static readonly defaultComponents: Record<
+        key,
+        (ent: Entity) => any
+    > = {};
+    private static currentEntityID = 0;
+    static addDefaultComponent(key: key | Class, func: () => any) {
         this.defaultComponents[keyify(key)] = func;
-    } 
+    }
 
     /** @internal */
     world?: World;
 
-    private readonly components: ClassMap; 
+    private readonly components: ClassMap;
 
-    constructor(public readonly id: key) {
+    constructor(public readonly id: key = Entity.currentEntityID++) {
         this.components = new ClassMap();
     }
 
     get<T extends keyof defaultComponents>(key: T): defaultComponents[T];
-    get<T>(key: key | Class<T>): T|undefined;
+    get<T>(key: key | Class<T>): T | undefined;
 
     get(key: key | Class<any>): any {
-        if(!this.has(key) && Entity.defaultComponents[keyify(key)]) {
-            this.add(Entity.defaultComponents[keyify(key)](this), keyify(key))
+        if (!this.has(key) && Entity.defaultComponents[keyify(key)]) {
+            this.add(Entity.defaultComponents[keyify(key)](this), keyify(key));
         }
         return this.components.get(key);
     }

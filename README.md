@@ -39,7 +39,7 @@ world.update();
             }
         ]
     ```
-    to your tsconfig
+    to your tsconfig compiler options.
 4.  Change your build scripts to use ttsc instead of tsc.
 
 ## Setup (Using .tgz)
@@ -103,8 +103,8 @@ Many ECS's require long, drawn-out, repetitive system impls:
 ```ts
 // Other ECS™
 class mySystem extends System<["players", "walls"]> {
-    constructor() {
-        super({
+    constructor(world: World) {
+        super(world, {
             players: With(PlayerComponent),
             walls: With(WallCollider),
         });
@@ -117,6 +117,7 @@ class mySystem extends System<["players", "walls"]> {
                     console.log(
                         `Collision between ${player.id} and ${wall.id}`
                     );
+                    this.world.globals.HUD.showGameOver();
                 }
             });
         });
@@ -133,7 +134,8 @@ By using a custom transformer, BDA can convert shorter, more readable syntax, in
 /** @system **/
 function mySys(
     walls: Query<[WallCollider]>,
-    players: Query<[PlayerComponent]>
+    players: Query<[PlayerComponent]>,
+    HUD: Res<HUD>
 ) {
     for (const [wall, wallEnt] of walls) {
         for (const [player, playerEnt] of players) {
@@ -141,13 +143,14 @@ function mySys(
                 console.log(
                     `Collision between ${playerEnt.id} and ${wallEnt.id}`
                 );
+                HUD.showGameOver();
             }
         }
     }
 }
 ```
 
-There are also a lot of different parameters for systems:
+There are a lot of different parameters for systems:
 
 -   Query: Query for all entities with matching components
 -   Ent: Get a single entity by it's ID
@@ -168,4 +171,26 @@ world.addRes(12, "highscore");
 world.getRes(Background); // Background type is inferred
 world.getRes<Date>("start");
 world.getRes<number>("highscore");
+```
+
+## Queries
+
+To build a useful system, querying for specific entities is essential. Queries search the world and return entities that match. The general form is: `Query<[Needed, Components]>` or `Query<[Needed, Components], Modifier>`. These will return an iterator, which allows you to loop over all the entities, **AND** the components that were asked for. This avoids the repetitive nature that might come from something like this:
+
+```ts
+// Others
+function mySys(walls: Query<With<WallCollider>>) {
+    for (const wallEnt of walls) {
+        const wall = wallEnt.get(WallCollider);
+        // Do stuff with wall
+    }
+}
+
+// BDA
+function mySys(walls: Query<[WallCollider]>) {
+    for (const [wall] of walls) {
+        // If you need the entity, [wall, wallEnt] will work instead
+        // Do stuff with wall
+    }
+}
 ```
