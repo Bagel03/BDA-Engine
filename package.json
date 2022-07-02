@@ -18,9 +18,9 @@
   },
   "exports": {
     ".": {
-      "default": "./dist/lib.mjs",
       "/engine": "./dist/lib.mjs",
-      "/transformer": "./dist/transformer.js"
+      "/transformer": "./dist/transformer.js",
+      "default": "./dist/lib.mjs"
     }
   },
   "keywords": [

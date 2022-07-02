@@ -14,9 +14,6 @@ export const createResDeclaration = (
     const nameNode = type.typeArguments?.[1];
 
     let expression: ts.Expression | null = null;
-
-    console.log(nameNode, classNode.kind);
-
     if (!nameNode) {
         expression = factory.createIdentifier(classNode.getText());
     } else {

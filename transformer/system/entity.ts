@@ -21,7 +21,6 @@ export const createEntityDeclaration = (
     }
 
     if (ts.isTypeQueryNode(idNode)) {
-        console.log(idNode);
         expression = factory.createIdentifier(idNode.exprName.getText());
     }
 
