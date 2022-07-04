@@ -4,16 +4,13 @@ import { ClassMap, key } from "../utils/classmap";
 import { Logger, LoggerColors } from "../utils/logger";
 import { Entity } from "./entity";
 import { QueryContainer, QueryManager } from "./query";
-import { System, SystemManager } from "./system";
+import { PureSystem, System, SystemManager, systemOrderArgs } from "./system";
 
 declare global {
     interface Window {
         readonly GLOBAL_WORLD: World;
     }
 }
-
-const window = {} as Window;
-
 // Holds resources & entities for the world
 export class World {
     public readonly resources: ClassMap = new ClassMap();
@@ -70,12 +67,20 @@ export class World {
     }
 
     // System stuff
-    addSystem(system: System, enabled = true) {
-        this.systemManager.addSystem(system, enabled);
+    addSystem(
+        system: System,
+        order: systemOrderArgs = { index: Infinity },
+        disabled = false
+    ) {
+        this.systemManager.addSystem(system, order, disabled);
     }
 
-    addPureSystem(system: System, enabled = true) {
-        this.systemManager.addPureSystem(system, enabled);
+    addPureSystem(
+        system: PureSystem,
+        order: systemOrderArgs = { index: Infinity },
+        disabled = false
+    ) {
+        this.systemManager.addPureSystem(system, order, disabled);
     }
 
     enableSystem(system: System) {
@@ -109,5 +114,16 @@ export class World {
     /** @internal */
     queryEvent(entity: Entity, event: key) {
         this.queryManager.event(event, entity);
+    }
+
+    //Plugin stuff
+    addPlugin(plugin: (world: World) => any) {
+        try {
+            this.logger.group(`Added plugin "${plugin.name}"`);
+            plugin(this);
+            this.logger.groupEnd();
+        } catch (e) {
+            this.logger.error(`Error while adding plugin "${plugin.name}"`, e);
+        }
     }
 }
