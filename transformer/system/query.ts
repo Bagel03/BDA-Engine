@@ -38,6 +38,7 @@ const functionFy = (node: ts.TypeNode) => {
     throw new Error(`Couldn't function-fy ${node}`);
 };
 
+let builtTime = Date.now().toString() + "-";
 let currentQueryID = 0;
 
 export const createQueryDeclarationAndSetup = (
@@ -56,7 +57,7 @@ export const createQueryDeclarationAndSetup = (
                 factory.createIdentifier("getQuery")
             ),
             undefined,
-            [factory.createStringLiteral(currentQueryID.toString())]
+            [factory.createStringLiteral(builtTime + currentQueryID.toString())]
         )
     );
 
@@ -100,7 +101,7 @@ export const createQueryDeclarationAndSetup = (
                 undefined,
                 queryPrams
             ),
-            factory.createStringLiteral(currentQueryID.toString()),
+            factory.createStringLiteral(builtTime + currentQueryID.toString()),
         ]
     );
 

@@ -1,4 +1,4 @@
-import { type, typeID } from "./type_id";
+import { typeID } from "./type_id";
 import type { Class } from "../types/class";
 export type key = string | number | symbol;
 export const isKey = (key: any): key is key => {

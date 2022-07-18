@@ -1,7 +1,8 @@
 import { ClassMap, key, keyify } from "../utils/classmap";
 import { World } from "./world";
 import { Class } from "../types/class";
-import { assert } from "../utils/assert";
+import { generateID } from "../utils/id";
+import { assert } from "../exports";
 
 export interface defaultComponents {
     [key: key]: any;
@@ -12,7 +13,6 @@ export class Entity {
         key,
         (ent: Entity) => any
     > = {};
-    private static currentEntityID = 0;
     static addDefaultComponent(key: key | Class, func: () => any) {
         this.defaultComponents[keyify(key)] = func;
     }
@@ -22,7 +22,7 @@ export class Entity {
 
     private readonly components: ClassMap;
 
-    constructor(public readonly id: key = Entity.currentEntityID++) {
+    constructor(public readonly id: key = generateID()) {
         this.components = new ClassMap();
     }
 
@@ -50,5 +50,14 @@ export class Entity {
         this.components.delete(name);
         this.world?.queryEvent(this, keyify(name));
         return this;
+    }
+
+    clear() {
+        this.components.forEach((_, key) => this.remove(key));
+    }
+
+    despawn() {
+        assert(this.world, "Entity not added to world");
+        this.world.removeEntity(this.id);
     }
 }

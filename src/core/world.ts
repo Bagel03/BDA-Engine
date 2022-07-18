@@ -36,6 +36,13 @@ export class World {
         this.queryManager.addEntity(entity);
     }
 
+    addBundle(bundle: (ent: Entity, world: World) => any, id?: key) {
+        const ent = new Entity(id);
+        bundle(ent, this);
+        this.addEntity(ent);
+        return ent;
+    }
+
     removeEntity(id: key) {
         const entity = this.entities.get(id);
         assert(entity, "Can not remove entity that was never added");

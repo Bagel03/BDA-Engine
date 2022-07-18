@@ -68,6 +68,10 @@ export class Query<C extends any[], M extends QueryModifier = [() => true]>
         }
     }
 
+    get size() {
+        return this.entities.size;
+    }
+
     single(): Entity {
         assert(
             this.entities.size === 1,

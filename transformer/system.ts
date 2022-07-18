@@ -2,13 +2,14 @@ import * as ts from "typescript";
 import { createEntityDeclaration } from "./system/entity";
 import { createQueryDeclarationAndSetup } from "./system/query";
 import { createResDeclaration } from "./system/res";
+import { createWorldDeclaration } from "./system/world";
 
 export const convertSystem = (
     node: ts.FunctionDeclaration,
     { factory }: ts.TransformationContext
 ) => {
-    const worldName = factory.createUniqueName("world").text;
-    const setupName = factory.createUniqueName("setup").text;
+    const worldName = factory.createUniqueName("__world").text;
+    const setupName = factory.createUniqueName("__setup").text;
 
     const worldPram = factory.createParameterDeclaration(
         undefined,
@@ -31,6 +32,14 @@ export const convertSystem = (
             throw new Error("Not a world"); // Remove this when doing world queries
 
         switch (pram.type.typeName.getText()) {
+            case "World": {
+                return createWorldDeclaration(
+                    pram,
+                    pram.type,
+                    factory,
+                    worldName
+                );
+            }
             case "Ent": {
                 const declaration = createEntityDeclaration(
                     pram,
